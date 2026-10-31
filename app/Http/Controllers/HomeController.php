@@ -1,0 +1,33 @@
+<?php
+namespace App\Http\Controllers;
+
+use App\Models\Media;
+use App\Models\Release;
+use Illuminate\Http\Request;
+
+/** Startseite nach dem Login: neue Filme, neue Serien, neueste Releases. */
+class HomeController extends Controller
+{
+    public function __invoke(Request $request)
+    {
+        return view('dashboard', [
+            'user' => $request->user(),
+            'movies' => $this->latest('movie'),
+            'shows' => $this->latest('tv'),
+            'releases' => Release::visible()->with('media')->orderByDesc('posted_at')->limit(15)->get(),
+            'hasMedia' => Media::query()->exists(),
+        ]);
+    }
+
+    /** Filme oder Serien, sortiert nach ihrem neuesten sichtbaren Release. */
+    private function latest(string $type)
+    {
+        return Media::query()
+            ->where('type', $type)
+            ->whereHas('releases', fn ($q) => $q->visible())
+            ->withMax(['releases as last_posted' => fn ($q) => $q->visible()], 'posted_at')
+            ->orderByDesc('last_posted')
+            ->limit(24)
+            ->get();
+    }
+}

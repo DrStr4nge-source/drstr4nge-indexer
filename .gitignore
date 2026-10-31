@@ -1,0 +1,27 @@
+# Abhängigkeiten und Build (entstehen erst bei der Installation)
+/vendor/
+/node_modules/
+/public/build/
+/public/hot
+/public/storage
+
+# Zugangsdaten und lokale Einstellungen
+.env
+.env.*
+!env.additions.txt
+auth.json
+
+# Laufzeitdaten
+/storage/*.key
+/storage/logs/
+/storage/framework/
+/storage/app/
+/bootstrap/cache/
+*.log
+
+# Werkzeuge und System
+.phpunit.result.cache
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

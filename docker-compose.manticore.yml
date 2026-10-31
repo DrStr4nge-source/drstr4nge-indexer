@@ -1,0 +1,17 @@
+# Manticore Search lokal starten: docker compose -f docker-compose.manticore.yml up -d
+services:
+  manticore:
+    image: manticoresearch/manticore
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9306:9306"   # SQL (MySQL-Protokoll), nur lokal erreichbar
+    environment:
+      - EXTRA=1
+    ulimits:
+      nproc: 65535
+      nofile: { soft: 65535, hard: 65535 }
+      memlock: { soft: -1, hard: -1 }
+    volumes:
+      - manticore-data:/var/lib/manticore
+volumes:
+  manticore-data:
