@@ -2,6 +2,12 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.10.0] – 2026-10-31
+
+### Neu
+- Backfill nach Tagen: `INDEXER_BACKFILL_DAYS` (z.B. 60). Der Crawler sucht für jede Gruppe selbst den Artikel, ab dem gelesen wird.
+- Admin-Übersicht zeigt die Server-Auslastung: CPU, RAM, Swap, Speicherplatz und Laufzeit, aktualisiert alle 5 Sekunden.
+
 ## [1.9.0] – 2026-10-31
 
 ### Neu

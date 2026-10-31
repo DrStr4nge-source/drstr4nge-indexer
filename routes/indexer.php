@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
 // Admin
 Route::middleware(['auth', EnsureAdmin::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('index');
+    Route::get('/system', [AdminController::class, 'system'])->name('system');
     Route::get('/users', [AdminController::class, 'users'])->name('users');
     Route::post('/users/{user}', [AdminController::class, 'updateUser'])->name('users.update');
     Route::get('/groups', [AdminController::class, 'groups'])->name('groups');

@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version 1.9.0" src="https://img.shields.io/badge/version-1.9.0-f59e0b">
+  <img alt="Version 1.10.0" src="https://img.shields.io/badge/version-1.10.0-f59e0b">
   <img alt="PHP 8.5" src="https://img.shields.io/badge/PHP-8.5-777bb4">
   <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12%20%7C%2013-ff2d20">
   <img alt="Ubuntu 24.04" src="https://img.shields.io/badge/Ubuntu-24.04%20LTS-e95420">
@@ -46,7 +46,7 @@ Die Oberfläche ist auf Deutsch.
 - Freischaltung automatisch nach bestätigter Zahlung, Rückmeldungen werden per Signatur geprüft
 
 **Für Admins**
-- Übersicht, User-Verwaltung (VIP, Sperren, Admin), Newsgroups (inkl. "Neu einlesen")
+- Übersicht mit Server-Auslastung (CPU, RAM, Speicherplatz), User-Verwaltung (VIP, Sperren, Admin), Newsgroups (inkl. "Neu einlesen")
 - Releases prüfen mit Filtern, Suche und Mehrfachauswahl (freigeben, Spam, löschen, Poster sperren)
 - Blacklist, Zahlungen, Einladungscodes
 - Einstellungen: Name der Seite, eigenes Logo, Registrierungs-Modus
@@ -99,7 +99,8 @@ Die ausführliche Anleitung mit manueller Installation, allen Einstellungen, Upd
 |---|---|---|
 | `NNTP_HOST`, `NNTP_PORT`, `NNTP_SSL`, `NNTP_USER`, `NNTP_PASS` | Zugang zum Usenet-Provider | Port 563, SSL an |
 | `NNTP_CONNECTIONS` | gleichzeitige Verbindungen des Crawlers | 4 |
-| `INDEXER_BACKFILL` | neueste Artikel beim ersten Crawl einer Gruppe | 100000 |
+| `INDEXER_BACKFILL_DAYS` | erster Crawl einer Gruppe: so viele Tage zurück (0 = nach Anzahl) | 0 |
+| `INDEXER_BACKFILL` | sonst: neueste Artikel beim ersten Crawl einer Gruppe | 100000 |
 | `INDEXER_FREE_GRABS` | Downloads pro Tag ohne VIP | 5 |
 | `INDEXER_RETENTION_DAYS` | Releases danach löschen | 1000 |
 | `INDEXER_DELETE_OBFUSCATED_DAYS` / `..._PASSWORDED_DAYS` | verschleierte bzw. passwortgeschützte löschen nach X Tagen (0 = nie) | 3 / 1 |

@@ -8,6 +8,7 @@ use App\Models\Newsgroup;
 use App\Models\Payment;
 use App\Models\Release;
 use App\Models\User;
+use App\Support\SystemStats;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -21,7 +22,14 @@ class AdminController extends Controller
             'groups' => Newsgroup::where('active', true)->count(),
             'grabs' => Download::where('created_at', '>=', now()->startOfDay())->count(),
             'income' => Payment::where('status', 'paid')->sum('amount'),
+            'system' => SystemStats::collect(base_path()),
         ]);
+    }
+
+    /** Nur die Server-Kacheln, für die automatische Aktualisierung */
+    public function system()
+    {
+        return view('admin._system', ['system' => SystemStats::collect(base_path())]);
     }
 
     public function users(Request $request)

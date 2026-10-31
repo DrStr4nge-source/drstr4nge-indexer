@@ -242,6 +242,8 @@ weglassen oder die Cover-Speicherung in `FetchMetadata` für diese Quelle abscha
 - **Crawler** (XOVER): baut Releases aus den Betreffzeilen, rechnet fehlende Dateien in die Vollständigkeit ein. Versteht klassische
   (`Name [01/20] - "datei.rar" yEnc (1/50)`) und abweichende Formate (`(7/8) - Description - "datei.rar" - 318 MB - yEnc (4/11)`):
   steht im Betreff nur ein Platzhalter, kommt der Name aus dem Dateinamen. Umlaute in Latin-1 werden nach UTF-8 umgewandelt.
+  Wie weit der erste Crawl einer Gruppe zurückgeht: `INDEXER_BACKFILL_DAYS=60` (Tage, der Indexer sucht für jede Gruppe selbst
+  den passenden Artikel) oder, wenn 0, `INDEXER_BACKFILL` (Anzahl der neuesten Artikel).
   Eine fehlerhafte Gruppe stoppt die anderen nicht. Nach einem Update kannst du eine Gruppe im Admin mit "Neu einlesen" noch einmal lesen lassen.
 - **Kategorien** (Newznab): Film SD/HD/UHD/BluRay, TV SD/HD/UHD/Sport/Anime, Audio, Bücher, Comics, PC, Spiele, Konsolen, XXX. Sonarr und Radarr finden dadurch passende Releases. Anpassbar in `config/indexer.php` und `app/Services/Categorizer.php`.
 - **Verschleierte Namen:** zufällige Namen werden erkannt, versteckt und (`indexer:inspect`) über die PAR2-Datei aufgelöst.

@@ -1,6 +1,6 @@
 <?php
 return [
-    'version' => '1.9.0',
+    'version' => '1.10.0',
     'nntp' => [
         'host' => env('NNTP_HOST'),
         'port' => (int) env('NNTP_PORT', 563),
@@ -9,7 +9,8 @@ return [
         'pass' => env('NNTP_PASS'),
         'connections' => (int) env('NNTP_CONNECTIONS', 4), // gleichzeitige Verbindungen des Crawlers (eine Gruppe je Verbindung)
     ],
-    'backfill'           => (int) env('INDEXER_BACKFILL', 100000), // Artikel beim ersten Crawl
+    'backfill'           => (int) env('INDEXER_BACKFILL', 100000), // Artikel beim ersten Crawl (wenn backfill_days = 0)
+    'backfill_days'      => (int) env('INDEXER_BACKFILL_DAYS', 0),    // erster Crawl: so viele Tage zurück, 0 = INDEXER_BACKFILL nutzen
     'min_completion'     => (int) env('INDEXER_MIN_COMPLETION', 90), // % Teile, ab denen ein Release sichtbar ist
     'free_grabs_per_day' => (int) env('INDEXER_FREE_GRABS', 5),     // VIP = unbegrenzt
     'retention_days'     => (int) env('INDEXER_RETENTION_DAYS', 1000), // ältere Releases werden gelöscht

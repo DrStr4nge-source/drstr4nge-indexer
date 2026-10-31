@@ -2,6 +2,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Newsgroup;
+use App\Services\Backfill;
 use App\Services\Nntp;
 use App\Services\ReleaseBuilder;
 use App\Support\ProcessPool;
@@ -59,6 +60,33 @@ class CrawlGroups extends Command
         return self::SUCCESS;
     }
 
+    /** Startpunkt beim ersten Crawl einer Gruppe: nach Tagen (INDEXER_BACKFILL_DAYS) oder nach Anzahl (INDEXER_BACKFILL). */
+    private function firstStart(Nntp $nntp, string $name, int $low, int $high): int
+    {
+        $byCount = max($low, $high - (int) config('indexer.backfill'));
+        $days = (int) config('indexer.backfill_days');
+        if ($days <= 0) {
+            return $byCount;
+        }
+        $probe = function (int $n) use ($nntp, $high): ?array {
+            try {
+                foreach ($nntp->xover($n, min($n + 200, $high)) as $row) {
+                    $ts = isset($row[3]) ? strtotime((string) $row[3]) : false;
+                    if ($ts) {
+                        return [(int) $row[0], $ts];
+                    }
+                }
+            } catch (\RuntimeException $e) {
+                // z.B. "keine Artikel in diesem Bereich"
+            }
+            return null;
+        };
+        $start = Backfill::findStart($probe, $low, $high, time() - $days * 86400);
+        $this->info(sprintf('%s: Backfill %d Tage ab Artikel %s (etwa %s Artikel)', $name, $days,
+            number_format($start, 0, ',', '.'), number_format($high - $start + 1, 0, ',', '.')));
+        return $start;
+    }
+
     private function crawl(Nntp $nntp, ReleaseBuilder $builder, array $groups): int
     {
         try {
@@ -75,7 +103,7 @@ class CrawlGroups extends Command
                 [$low, $high] = $nntp->group($g->name);
                 $start = $g->last_article > 0
                     ? max($g->last_article + 1, $low)
-                    : max($low, $high - (int) config('indexer.backfill'));
+                    : $this->firstStart($nntp, $g->name, $low, $high);
                 if ($start > $high) {
                     $this->info("{$g->name}: nichts Neues");
                 }
