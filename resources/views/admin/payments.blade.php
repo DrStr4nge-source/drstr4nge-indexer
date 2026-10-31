@@ -10,7 +10,7 @@
                     <tbody>
                     @forelse ($payments as $p)
                         <tr>
-                            <td class="nowrap tm-muted">{{ $p->created_at->format('d.m.Y H:i') }}</td>
+                            <td class="nowrap tm-muted">{{ \App\Support\Format::dt($p->created_at, 'd.m.Y H:i') }}</td>
                             <td>{{ $p->user?->email }}</td>
                             <td>{{ config("indexer.plans.{$p->plan}.label", $p->plan) }}</td>
                             <td class="num">{{ number_format((float) $p->amount, 2, ',', '.') }} {{ $p->currency }}</td>

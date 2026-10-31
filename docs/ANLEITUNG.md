@@ -135,29 +135,22 @@ Dann:
 8. Optional SSL: `apt install -y certbot python3-certbot-nginx && certbot --nginx -d deine-domain.de`
 
 ## Update
-Neue Version einspielen (Daten, `.env`, Logo und Cover bleiben erhalten). `/pfad/zur/drstr4nge-indexer.zip` anpassen.
-Mit Git geht es auch: im geklonten Ordner `git pull`, dann statt der ersten drei Zeilen `cp -a {app,config,database,resources,routes,tests} /var/www/indexer/`.
+Mit einem Befehl, direkt von GitHub (Daten, `.env`, Logo, Cover und Einstellungen aus dem Admin bleiben erhalten):
 
-    rm -rf /tmp/idx && mkdir /tmp/idx
-    unzip -q /pfad/zur/drstr4nge-indexer.zip -d /tmp/idx
-    cp -a /tmp/idx/*/{app,config,database,resources,routes,tests} /var/www/indexer/
-    cd /var/www/indexer
-    php artisan migrate --force
-    php artisan config:clear
-    php artisan route:clear
-    php artisan view:clear
-    chown -R www-data:www-data /var/www/indexer
+    cd /tmp && rm -rf dsi && git clone -q https://github.com/DrStr4nge-source/drstr4nge-indexer.git dsi && sudo bash dsi/update.sh
+
+`update.sh` kopiert die neuen Dateien nach `/var/www/indexer`, ergänzt neue Einträge in der `.env` (vorhandene Werte bleiben),
+aktualisiert Zeitplan und Datenbank, richtet den Pre-Dienst ein bzw. startet ihn neu und installiert rsync/rclone, falls sie fehlen.
+Anderer Ordner: `sudo APP_DIR=/pfad bash dsi/update.sh`.
+
+Achtung: `config/indexer.php` wird überschrieben. Eigene Änderungen dort (z.B. VIP-Preise) danach erneut eintragen.
+`install.sh` ist nur für die Erstinstallation und bricht ab, wenn `/var/www/indexer` schon existiert.
 
 Bei Bedarf zusätzlich:
 
     php artisan storage:link              # falls Logo/Cover nicht angezeigt werden ("already exists" ist ok)
-    npm run build                         # nur nötig, wenn sich resources/css oder resources/js geändert haben
-    sudo -u www-data php artisan indexer:recategorize   # bestehende Releases neu einordnen (z.B. nach neuer Blacklist-Regel)
+    sudo -u www-data php artisan indexer:recategorize   # bestehende Releases neu einordnen
     sudo -u www-data php artisan indexer:search-index   # nur mit Manticore
-
-Achtung: `config/indexer.php` wird überschrieben. Eigene Änderungen dort (z.B. VIP-Preise) danach erneut eintragen.
-Neue Einträge aus `env.additions.txt` bei Bedarf in die `.env` übernehmen (ohne Eintrag gelten die Standardwerte).
-`install.sh` ist nur für die Erstinstallation und bricht ab, wenn `/var/www/indexer` schon existiert.
 
 ## PHP 8.5
 Das Projekt ist auf PHP 8.5 ausgelegt. Laravel 13 (die aktuelle Version bei `composer create-project`) unterstützt PHP 8.3 bis 8.5,
@@ -252,7 +245,7 @@ Von Hand: `sudo -u www-data php artisan indexer:pre-fetch`
 
 Vorhandene Releases nachträglich verknüpfen (z.B. nach dem ersten Tag): `sudo -u www-data php artisan indexer:pre-match`
 
-**Bestehende Installation nachrüsten** (Erstinstallation mit `install.sh` macht das selbst):
+**Von Hand nachrüsten** (nur nötig ohne `update.sh`; `install.sh` und `update.sh` machen das selbst):
 
     cd /var/www/indexer && php artisan migrate --force
     echo "\Illuminate\Support\Facades\Schedule::command('indexer:pre-fetch')->everyFiveMinutes()->withoutOverlapping();" >> routes/console.php
@@ -273,6 +266,48 @@ Vorhandene Releases nachträglich verknüpfen (z.B. nach dem ersten Tag): `sudo 
     WantedBy=multi-user.target
     UNIT
     systemctl daemon-reload && systemctl enable --now drstr4nge-pre
+
+## Zugangsdaten im Admin
+Unter **Admin > Zugangsdaten** trägst du Usenet-Zugang, TMDB-Key, Mail-Versand (SMTP), Warn-Empfänger, NOWPayments und die
+Sicherung ein, ohne die `.env` anzufassen. Werte aus dem Admin gelten sofort und haben Vorrang. Ein leeres Feld bedeutet: Wert aus
+der `.env`. Passwörter werden mit dem `APP_KEY` verschlüsselt gespeichert und nie wieder angezeigt. Knöpfe zum Testen gibt es für
+Usenet ("Verbindung testen") und Mail ("Test-Mail schicken").
+
+## Sicherung (auch nach Google Drive)
+Jede Nacht um 03:30 Uhr (`BACKUP_TIME`) sichert `indexer:backup` die Datenbank (gzip), die `.env` und das Logo in eine Datei
+`storage/app/backups/drstr4nge-backup-DATUM.tar`. Aufbewahrt werden 7 Tage (`BACKUP_KEEP_DAYS`). Von Hand:
+`sudo -u www-data php artisan indexer:backup` oder im Admin unter Zugangsdaten > Sicherung "Jetzt sichern".
+
+**Google Drive:** Admin > Zugangsdaten > Sicherung > Google Drive > Verbinden. Dafür auf deinem PC rclone herunterladen
+(https://rclone.org/downloads/), dort `rclone authorize "drive"` ausführen, bei Google anmelden und den angezeigten Text in das Feld
+einfügen. Ab dann landet jede Sicherung zusätzlich im gewählten Drive-Ordner. Dort werden alte Sicherungen ebenfalls nach
+`BACKUP_KEEP_DAYS` gelöscht. Alternativ auf dem Server: `sudo bash setup-gdrive.sh`. Andere Ziele (Dropbox, OneDrive, S3) gehen
+mit rclone genauso (`BACKUP_RCLONE_REMOTE`). Ein zweiter Server per SSH: `BACKUP_REMOTE=backup@server2:/srv/backups/`.
+
+**Wiederherstellen:**
+
+    tar -xf drstr4nge-backup-DATUM.tar                    # ergibt datenbank.sql.gz, env, branding/
+    gunzip -c datenbank.sql.gz | mysql -u root indexer    # Datenbank zurückspielen
+    cp env /var/www/indexer/.env                          # nur bei neuem Server (enthält den APP_KEY)
+
+## Überwachung, Warn-Mails und Log
+`indexer:health` prüft alle 15 Minuten: Findet der Crawler seit 6 Stunden nichts (`ALERT_CRAWL_HOURS`)? Ist der IRC-Scraper seit
+30 Minuten getrennt? Ist die Festplatte zu 90 % voll (`ALERT_DISK_PERCENT`)? Fehlt die Sicherung oder ist sie fehlgeschlagen?
+Dann geht eine Mail an `ALERT_EMAIL` bzw. alle Admins, die gleiche Warnung höchstens alle 12 Stunden, und eine Mail, sobald es
+wieder läuft. Test: `php artisan indexer:health --test`.
+
+Im Admin unter **Log** siehst du Warnungen und Fehler aus `storage/logs/laravel.log` (aufklappbar mit allen Details), dazu die
+aktuellen Probleme der Überwachung. Die Übersicht zeigt oben eine rote Box, solange etwas nicht stimmt.
+
+**Was läuft gerade?** `php artisan indexer:status` zeigt laufende Crawls, Stand jeder Gruppe, Releases, Pre-Daten, Sicherung und die
+letzten Läufe aller geplanten Befehle. Ein Crawl von Hand startet nicht, solange schon einer läuft. Nach einem Absturz hängende
+Sperren löst `php artisan indexer:crawl --unlock`.
+
+## Zwei-Faktor-Anmeldung für Admins
+Admin > Zwei-Faktor > Einrichten: QR-Code mit einer Code-App scannen (Google Authenticator, Aegis, 2FAS, Microsoft Authenticator)
+und den Code eingeben. Danach fragt der Admin-Bereich nach jedem Login einmal nach dem 6-stelligen Code. Du bekommst 8
+Wiederherstellungscodes für den Notfall. Unter Einstellungen kannst du Zwei-Faktor für alle Admins verlangen.
+Handy und Codes verloren: `php artisan indexer:2fa-reset deine@adresse`.
 
 ## Krypto-Zahlung mit NOWPayments (ohne eigenen Server, z.B. Monero)
 1. Konto bei nowpayments.io anlegen, unter Einstellungen die Auszahlungs-Wallet(s) eintragen (z.B. deine Monero-Adresse).
@@ -308,13 +343,22 @@ Vorhandene Releases nachträglich verknüpfen (z.B. nach dem ersten Tag): `sudo 
   Eine fehlerhafte Gruppe stoppt die anderen nicht. Nach einem Update kannst du eine Gruppe im Admin mit "Neu einlesen" noch einmal lesen lassen.
 - **Kategorien** (Newznab): Film SD/HD/UHD/BluRay, TV SD/HD/UHD/Sport/Anime, Audio, Bücher, Comics, PC, Spiele, Konsolen, XXX. Sonarr und Radarr finden dadurch passende Releases. Anpassbar in `config/indexer.php` und `app/Services/Categorizer.php`.
 - **Verschleierte Namen:** zufällige Namen werden erkannt, versteckt und (`indexer:inspect`) über die PAR2-Datei aufgelöst.
+  Bleibt der Name auch in der PAR2-Datei verschleiert, vergleicht `indexer:pre-deobfuscate` (alle 30 Minuten) die echte Größe und
+  Dateianzahl aus der PAR2-Datei mit der PreDB. Passt genau ein Pre (Größe, Dateien, Zeitfenster), bekommt das Release dessen Namen.
+  Abschalten: `PRE_DEOBFUSCATE=false`. Erst testen: `php artisan indexer:pre-deobfuscate --dry-run`.
 - **Passwort-Erkennung:** RAR4/RAR5-Header werden geprüft (Datei- und Header-Verschlüsselung), dazu Namens-Hinweise.
 - **Spam:** Blacklist (Poster mit * und Name per Regex, im Admin), Spam-Wörter, nur-ausführbare-Dateien, zu kleine Releases.
   Namens-Regeln greifen erst, wenn der echte Name bekannt ist (nicht bei verschleierten Zufallsnamen).
   Beispiel "nur deutsche Releases": Typ "Name (Regex)" mit `^(?!.*(german|deutsch|(?<![a-z])ger(?![a-z])))`.
+  Neue oder gelöschte Regeln gelten nach spätestens 10 Minuten auch für alle vorhandenen Releases.
 - **Aufräumen** (`indexer:cleanup`, täglich 4 Uhr): alte Releases (Standard 1000 Tage), nie fertig gewordene (2 Tage), Spam (7 Tage), verschleierte ohne Namen (`INDEXER_DELETE_OBFUSCATED_DAYS`, Standard 3), passwortgeschützte (`INDEXER_DELETE_PASSWORDED_DAYS`, Standard 1), alte Download-Logs, offene Zahlungen. Von Hand freigegebene Releases bleiben. 0 schaltet eine Regel ab.
 - **Rate-Limit:** API pro User und Minute (Standard 60, VIP 300) plus pro IP.
-- **Newznab-API:** `caps`, `search`, `tvsearch` (season/ep), `movie`, `get`, mit `cat`, `maxage`, `offset`, `limit`, `imdbid`, `tmdbid`, `tvdbid`.
+- **Newznab-API:** `caps`, `search`, `tvsearch` (season/ep), `movie`, `get`, mit `cat`, `maxage`, `offset`, `limit`, `imdbid`, `tmdbid`, `tvdbid`, `tvmazeid`.
+- **TVmaze** (`indexer:tvmaze`, stündlich, ohne Key): ergänzt bei Serien TVDB-, IMDb- und TVmaze-ID, damit Sonarr Folgen zuverlässiger findet. Abschalten: `TVMAZE_ENABLED=false`.
+- **Merkliste und RSS:** Filme und Serien auf der Titelseite merken (`/merkliste`). Auf der Konto-Seite stehen RSS-Feeds für neue
+  Releases, nur die Merkliste, nur Filme oder nur Serien, z.B. für NZBGet oder SABnzbd: `/rss?apikey=KEY&t=merkliste` bzw. `&cat=2000`.
+- **Melden:** Neben jedem Download-Knopf meldet "!" ein Release als defekt, mit Passwort, falsch benannt oder Spam. Im Admin unter
+  Meldungen: erledigen, als Spam markieren oder löschen.
   In Sonarr/Radarr: Typ Newznab, URL = Adresse der Seite, API-Pfad `/api`, API-Key von der Konto-Seite, Kategorie TV (5000) bzw. Movies (2000).
 - **Design:** dunkles Theme mit orangem Akzent. Startseite mit Cover-Reihen (neue Filme, neue Serien) und den neuesten Releases,
   Detailseite pro Film/Serie (`/titel/...`) mit Cover, Bewertung, Inhalt, IMDb/TMDB-Links und allen Releases. Suche oben in der Leiste
@@ -323,15 +367,20 @@ Vorhandene Releases nachträglich verknüpfen (z.B. nach dem ersten Tag): `sudo 
 - **Registrierung:** Link auf der Login-Seite. Im Admin unter Einstellungen: offen für alle, nur mit Einladungscode oder geschlossen. Codes unter Admin > Einladungen erzeugen (auch als fertiger Link zum Kopieren). Schutz: 5 Registrierungen pro Minute und IP, unsichtbare Bot-Falle.
 - **User:** Konto-Seite (`/konto`) mit API-Key, Tageslimit, Download-Verlauf; VIP per NOWPayments oder BTCPay (`PAYMENT_PROVIDER`).
 - **Admin:**
-  - Übersicht mit Zahlen
+  - Übersicht mit Zahlen, Betrieb (Crawler, Sicherung, Pre-Daten, Meldungen) und Server-Auslastung
   - User: VIP vergeben/entfernen, sperren, Admin machen
   - Newsgroups: hinzufügen, pausieren, "Neu einlesen", löschen
   - Releases: Filter (auffällig, verschleiert, Spam, Passwort, unvollständig), Suche nach Name/Poster, Mehrfachauswahl
     (Umschalt+Klick für Bereiche) mit Freigeben, Spam, Löschen, "Poster sperren"; auch "auf alle Treffer anwenden"
-  - Blacklist, Zahlungen, Einladungen
-  - Einstellungen: Name der Seite, Logo-Upload (PNG, JPG oder WebP, höchstens 1 MB), Registrierung
-- **Befehle:** `indexer:crawl`, `indexer:inspect`, `indexer:metadata`, `indexer:cleanup`, `indexer:recategorize`, `indexer:search-index`,
-  `indexer:test-nntp`, `indexer:make-admin mail@beispiel.de --create`.
+  - PreDB, Meldungen, Blacklist, Zahlungen, Einladungen, Log
+  - Zugangsdaten: Usenet, TMDB, Mail, Warnungen, Zahlung, Sicherung/Google Drive
+  - Einstellungen: Name der Seite, Logo-Upload (PNG, JPG oder WebP, höchstens 1 MB), Registrierung, Zwei-Faktor-Pflicht
+  - Zwei-Faktor-Anmeldung
+- **Befehle:** `indexer:crawl`, `indexer:status`, `indexer:inspect`, `indexer:metadata`, `indexer:tvmaze`, `indexer:cleanup`, `indexer:recategorize`,
+  `indexer:search-index`, `indexer:test-nntp`, `indexer:backup`, `indexer:health`, `indexer:pre-irc`, `indexer:pre-fetch`, `indexer:pre-match`,
+  `indexer:pre-deobfuscate`, `indexer:2fa-reset`, `indexer:make-admin mail@beispiel.de --create`.
+- **Zeit:** gespeichert wird in UTC, angezeigt und geplant in deutscher Zeit (`INDEXER_TIMEZONE=Europe/Berlin`).
+- **Zeitplan:** steht in `routes/indexer-schedule.php` und kommt mit jedem Update mit.
 - **Tests:** `php artisan test` (Unit- und Feature-Tests).
 
 ## Grenzen

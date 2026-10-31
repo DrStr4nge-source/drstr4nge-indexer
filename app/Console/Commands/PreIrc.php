@@ -58,6 +58,9 @@ class PreIrc extends Command
                 continue; // sofort mit neuen Werten
             } catch (\RuntimeException $e) {
                 $this->error($this->now() . ' ' . $e->getMessage() . ", neuer Versuch in {$wait} s");
+                if (Cache::get('pre_irc.error') !== $e->getMessage()) { // gleichen Fehler nicht dauernd wiederholen
+                    \Illuminate\Support\Facades\Log::warning('IRC-Pre-Scraper: ' . $e->getMessage());
+                }
                 Cache::forever('pre_irc.error', $e->getMessage());
             } finally {
                 $irc->close();
@@ -111,6 +114,6 @@ class PreIrc extends Command
 
     private function now(): string
     {
-        return '[' . date('Y-m-d H:i:s') . ']';
+        return '[' . \App\Support\Format::dt(now(), 'Y-m-d H:i:s') . ']';
     }
 }

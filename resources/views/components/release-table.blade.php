@@ -27,7 +27,7 @@
                         <div class="tm-relname">{{ $r->name }}</div>
                         @if ($r->pre)
                             <div class="tm-meta">
-                                <span class="tm-chip" title="Pre: {{ $r->pre->predate?->timezone(config('app.timezone'))->format('d.m.Y H:i') }}{{ $r->pre->source ? ' · ' . $r->pre->source : '' }}">Pre {{ \App\Support\Format::ago($r->pre->predate) }}</span>
+                                <span class="tm-chip" title="Pre: {{ \App\Support\Format::dt($r->pre->predate, 'd.m.Y H:i') }}{{ $r->pre->source ? ' · ' . $r->pre->source : '' }}">Pre {{ \App\Support\Format::ago($r->pre->predate) }}</span>
                                 @if ($r->pre->isNuked())<span class="tm-chip bad" title="{{ $r->pre->nuke_reason }}">{{ $r->pre->nukeLabel() }}{{ $r->pre->nuke_reason ? ': ' . \Illuminate\Support\Str::limit($r->pre->nuke_reason, 40) : '' }}</span>@endif
                             </div>
                         @endif
@@ -41,8 +41,21 @@
                     </td>
                     <td class="tm-hide-sm nowrap"><span class="tm-chip">{{ \App\Services\Categories::name($r->category_id) }}</span></td>
                     <td class="num">{{ \App\Support\Format::bytes($r->size) }}</td>
-                    <td class="tm-hide-sm nowrap tm-muted">{{ $r->posted_at?->format('d.m.Y H:i') }}</td>
-                    <td class="num"><a class="tm-btn tm-btn-primary tm-btn-sm" href="{{ route('download', $r->guid) }}">NZB</a></td>
+                    <td class="tm-hide-sm nowrap tm-muted">{{ \App\Support\Format::dt($r->posted_at, 'd.m.Y H:i') }}</td>
+                    <td class="num nowrap">
+                        <a class="tm-btn tm-btn-primary tm-btn-sm" href="{{ route('download', $r->guid) }}">NZB</a>
+                        <details class="tm-report">
+                            <summary class="tm-btn tm-btn-sm" title="Release melden" aria-label="Release melden">!</summary>
+                            <form method="POST" action="{{ route('report', $r->guid) }}" class="tm-report-box">@csrf
+                                <div class="tm-small" style="font-weight:600;margin-bottom:8px">Release melden</div>
+                                <select class="tm-select" name="reason" required style="height:34px">
+                                    @foreach (\App\Models\ReleaseReport::REASONS as $k => $label)<option value="{{ $k }}">{{ $label }}</option>@endforeach
+                                </select>
+                                <input class="tm-input" name="note" maxlength="500" placeholder="Hinweis (optional)" style="height:34px;margin-top:6px">
+                                <button class="tm-btn tm-btn-primary tm-btn-sm" style="margin-top:8px;width:100%">Melden</button>
+                            </form>
+                        </details>
+                    </td>
                 </tr>
             @empty
                 <tr><td colspan="6"><div class="tm-empty" style="margin:8px 0">Nichts gefunden.</div></td></tr>

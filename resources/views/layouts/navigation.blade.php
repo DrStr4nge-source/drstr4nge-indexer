@@ -6,6 +6,7 @@
         ['Releases', route('browse'), request()->routeIs('browse') && !request('cat')],
         ['Filme', route('movies'), request()->routeIs('movies')],
         ['Serien', route('shows'), request()->routeIs('shows')],
+        ['Merkliste', route('watchlist'), request()->routeIs('watchlist')],
         ['VIP', route('vip'), request()->routeIs('vip')],
     ];
     if ($tmUser?->is_admin) {
@@ -39,7 +40,7 @@
             <div class="tm-nav-right">
                 @if ($tmUser)
                     @if ($tmUser->isVip())
-                        <a href="{{ route('vip') }}" class="tm-pill is-vip tm-hide-sm" title="VIP bis {{ $tmUser->vip_until->format('d.m.Y') }}">VIP</a>
+                        <a href="{{ route('vip') }}" class="tm-pill is-vip tm-hide-sm" title="VIP bis {{ \App\Support\Format::dt($tmUser->vip_until, 'd.m.Y') }}">VIP</a>
                     @else
                         <a href="{{ route('vip') }}" class="tm-pill tm-hide-sm">VIP holen</a>
                     @endif

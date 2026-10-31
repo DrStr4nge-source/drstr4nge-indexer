@@ -11,7 +11,7 @@
                     <div class="tm-muted tm-small">{{ $irc['enabled'] ? 'Nick fehlt (unten eintragen)' : 'im Admin ausgeschaltet' }}</div>
                 @elseif ($connectedAt)
                     <div class="v" style="font-size:20px;padding:4px 0;color:var(--tm-ok)">verbunden</div>
-                    <div class="tm-muted tm-small">seit {{ $connectedAt->timezone(config('app.timezone'))->format('d.m.Y H:i') }}</div>
+                    <div class="tm-muted tm-small">seit {{ \App\Support\Format::dt($connectedAt, 'd.m.Y H:i') }}</div>
                 @else
                     <div class="v" style="font-size:20px;padding:4px 0;color:var(--tm-bad)">getrennt</div>
                     <div class="tm-muted tm-small">Dienst prüfen: systemctl status drstr4nge-pre</div>
@@ -93,7 +93,7 @@
                     <tbody>
                         @forelse ($pres as $p)
                             <tr>
-                                <td class="nowrap tm-muted" title="{{ $p->predate?->timezone(config('app.timezone'))->format('d.m.Y H:i:s') }}">{{ \App\Support\Format::ago($p->predate) }}</td>
+                                <td class="nowrap tm-muted" title="{{ \App\Support\Format::dt($p->predate, 'd.m.Y H:i:s') }}">{{ \App\Support\Format::ago($p->predate) }}</td>
                                 <td>
                                     <div class="tm-relname">{{ $p->title }}</div>
                                     @if ($p->nukeLabel())<div class="tm-meta"><span class="tm-chip {{ $p->isNuked() ? 'bad' : '' }}">{{ $p->nukeLabel() }}</span> <span class="tm-muted tm-small">{{ $p->nuke_reason }}</span></div>@endif

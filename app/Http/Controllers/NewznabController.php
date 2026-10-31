@@ -61,6 +61,7 @@ class NewznabController extends Controller
             'imdb_id' => $this->imdb((string) $request->query('imdbid')),
             'tmdb_id' => ctype_digit((string) $request->query('tmdbid')) ? (int) $request->query('tmdbid') : null,
             'tvdb_id' => ctype_digit((string) $request->query('tvdbid')) ? (int) $request->query('tvdbid') : null,
+            'tvmaze_id' => ctype_digit((string) $request->query('tvmazeid')) ? (int) $request->query('tvmazeid') : null,
         ]);
         $extra = $ids ? function ($query) use ($ids) {
             foreach ($ids as $col => $val) {
@@ -87,6 +88,7 @@ class NewznabController extends Controller
             $meta = $m ? ($m->imdb_id ? '<newznab:attr name="imdb" value="' . e(substr($m->imdb_id, 2)) . '"/>' : '')
                 . ($m->tmdb_id ? '<newznab:attr name="tmdbid" value="' . $m->tmdb_id . '"/>' : '')
                 . ($m->tvdb_id ? '<newznab:attr name="tvdbid" value="' . $m->tvdb_id . '"/>' : '')
+                . ($m->tvmaze_id ? '<newznab:attr name="tvmazeid" value="' . $m->tvmaze_id . '"/>' : '')
                 . ($m->coverUrl() ? '<newznab:attr name="coverurl" value="' . e($m->coverUrl()) . '"/>' : '') : '';
             $url = e(url('/api') . '?t=get&id=' . $r->guid . '&apikey=' . $user->api_key);
             $items .= '<item><title>' . e($r->name) . '</title><guid isPermaLink="false">' . $r->guid . '</guid>'
@@ -120,7 +122,7 @@ class NewznabController extends Controller
         }
         return '<caps><server title="' . e(config('app.name')) . '"/><limits max="100" default="50"/><searching>'
             . '<search available="yes" supportedParams="q"/>'
-            . '<tv-search available="yes" supportedParams="q,season,ep,tvdbid,tmdbid,imdbid"/>'
+            . '<tv-search available="yes" supportedParams="q,season,ep,tvdbid,tvmazeid,tmdbid,imdbid"/>'
             . '<movie-search available="yes" supportedParams="q,imdbid,tmdbid"/>'
             . '</searching><categories>' . $cats . '</categories></caps>';
     }

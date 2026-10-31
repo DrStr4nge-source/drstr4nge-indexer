@@ -6,7 +6,7 @@
             <h1 class="tm-h1">VIP</h1>
         </div>
         @if ($user->isVip())
-            <span class="tm-pill is-vip">VIP bis {{ $user->vip_until->format('d.m.Y') }}</span>
+            <span class="tm-pill is-vip">VIP bis {{ \App\Support\Format::dt($user->vip_until, 'd.m.Y') }}</span>
         @endif
     </x-slot>
 

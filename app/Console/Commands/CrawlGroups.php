@@ -6,6 +6,7 @@ use App\Services\Backfill;
 use App\Services\Nntp;
 use App\Services\NntpConnectionLost;
 use App\Services\ReleaseBuilder;
+use App\Support\CrawlLock;
 use App\Support\ProcessPool;
 use Illuminate\Console\Command;
 
@@ -14,11 +15,17 @@ class CrawlGroups extends Command
     protected $signature = 'indexer:crawl
         {--batch=20000 : Artikel pro Abruf}
         {--group= : Nur diese Gruppe (ID oder Name)}
-        {--connections= : Gleichzeitige Verbindungen (Standard: NNTP_CONNECTIONS)}';
+        {--connections= : Gleichzeitige Verbindungen (Standard: NNTP_CONNECTIONS)}
+        {--unlock : hängende Sperren eines abgestürzten Crawls lösen und beenden}';
     protected $description = 'Holt neue Header aller aktiven Newsgroups und baut Releases (mehrere Gruppen parallel)';
 
     public function handle(Nntp $nntp, ReleaseBuilder $builder): int
     {
+        if ($this->option('unlock')) {
+            CrawlLock::forceRelease();
+            $this->info('Sperren gelöst. Nur nutzen, wenn wirklich kein Crawl mehr läuft (ps aux | grep indexer:crawl).');
+            return self::SUCCESS;
+        }
         if ($only = $this->option('group')) {
             $groups = Newsgroup::where('id', ctype_digit((string) $only) ? (int) $only : 0)->orWhere('name', $only)->get();
             if ($groups->isEmpty()) {
@@ -33,11 +40,24 @@ class CrawlGroups extends Command
             return self::SUCCESS;
         }
 
-        $connections = max(1, (int) ($this->option('connections') ?: config('indexer.nntp.connections', 1)));
-        if (!$only && $connections > 1 && $groups->count() > 1) {
-            return $this->parallel($groups->all(), min($connections, $groups->count()));
+        // Gesamtlauf nur einmal gleichzeitig (Cronjob und Handstart). Einzelne Gruppen sperren sich in crawl() selbst.
+        $all = null;
+        if (!$only) {
+            $all = CrawlLock::all();
+            if (!$all) {
+                $this->warn('Es läuft schon ein Crawl (z.B. über den Cronjob). Stand: php artisan indexer:status');
+                return self::SUCCESS;
+            }
         }
-        return $this->crawl($nntp, $builder, $groups->all());
+        try {
+            $connections = max(1, (int) ($this->option('connections') ?: config('indexer.nntp.connections', 1)));
+            if (!$only && $connections > 1 && $groups->count() > 1) {
+                return $this->parallel($groups->all(), min($connections, $groups->count()));
+            }
+            return $this->crawl($nntp, $builder, $groups->all());
+        } finally {
+            $all?->release();
+        }
     }
 
     /** Jede Gruppe in einem eigenen Prozess mit eigener Verbindung, höchstens $n gleichzeitig. */
@@ -96,12 +116,18 @@ class CrawlGroups extends Command
             $nntp->connect();
         } catch (\RuntimeException $e) {
             $this->error('Verbindung fehlgeschlagen: ' . $e->getMessage() . ' (Test: php artisan indexer:test-nntp)');
+            \Illuminate\Support\Facades\Log::error('Crawler: Verbindung zum Usenet-Server fehlgeschlagen: ' . $e->getMessage());
             return self::FAILURE;
         }
         $batch = max(1000, (int) $this->option('batch'));
         $ok = true;
 
         foreach ($groups as $g) {
+            $lock = CrawlLock::group((int) $g->id);
+            if (!$lock) {
+                $this->warn("{$g->name}: wird gerade schon gelesen, übersprungen");
+                continue;
+            }
             try {
                 [$low, $high] = $this->retry($nntp, null, fn () => $nntp->group($g->name));
                 $start = $g->last_article > 0
@@ -115,13 +141,18 @@ class CrawlGroups extends Command
                     $rows = $this->retry($nntp, $g->name, fn () => $nntp->xover($start, $end));
                     $n = $builder->ingest($g, $rows);
                     $g->update(['last_article' => $end]);
+                    CrawlLock::progress((int) $g->id, $g->name, $end, $high);
                     $this->info("{$g->name}: $start-$end ($n Releases aktualisiert)");
                     $start = $end + 1;
                 }
             } catch (\RuntimeException $e) {
                 // Eine kaputte Gruppe stoppt nicht die anderen
                 $this->error("{$g->name}: " . $e->getMessage());
+                \Illuminate\Support\Facades\Log::warning("Crawler: {$g->name}: " . $e->getMessage());
                 $ok = false;
+            } finally {
+                CrawlLock::done((int) $g->id);
+                $lock->release();
             }
         }
         $nntp->close();

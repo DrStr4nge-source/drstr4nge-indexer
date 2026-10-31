@@ -17,7 +17,7 @@
         <div class="tm-card-title">{{ $media->title }}</div>
         <div class="tm-meta">
             @if ($media->year)<span class="tm-chip">{{ $media->year }}</span>@endif
-            @if ($date)<span>{{ \Illuminate\Support\Carbon::parse($date)->format('d.m.Y') }}</span>@endif
+            @if ($date)<span>{{ \App\Support\Format::dt($date, 'd.m.Y') }}</span>@endif
         </div>
     </div>
 </a>

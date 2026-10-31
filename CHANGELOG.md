@@ -2,6 +2,28 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.12.0] – 2026-10-31
+
+### Neu
+- **Zugangsdaten im Admin:** Usenet, TMDB, Mail, Warn-Empfänger, NOWPayments und Sicherung ohne `.env` eintragen, mit Verbindungs- und Mail-Test
+- **Tägliche Sicherung** (Datenbank, `.env`, Logo), 7 Tage aufbewahrt, auf Wunsch zusätzlich nach **Google Drive** (rclone, im Admin verbinden) oder auf einen zweiten Server
+- **Zwei-Faktor-Anmeldung** für Admins mit QR-Code und Wiederherstellungscodes, optional Pflicht
+- **Überwachung mit Warn-Mails:** Crawler steht, IRC getrennt, Festplatte voll, Sicherung fehlt; Mail auch, wenn es wieder läuft
+- **Log im Admin:** Warnungen und Fehler mit Details, Suche und Filter
+- `indexer:status`: was gerade läuft, Stand je Gruppe, letzte Läufe; Sperre gegen doppelten Crawl (`--unlock` nach Absturz)
+- **Verschleierte Releases über die PreDB benennen** (echte Größe/Dateien aus PAR2, nur eindeutige Treffer)
+- **TVmaze:** TVDB-/TVmaze-IDs für Serien, `tvmazeid` in der Newznab-API
+- **Merkliste** und **RSS-Feeds** pro User (neu, Merkliste, Kategorien)
+- **Releases melden**, Admin-Seite Meldungen
+- Betrieb-Kacheln in der Admin-Übersicht
+- `update.sh`: Update mit einem Befehl von GitHub; `install.sh` fragt Usenet, TMDB, IRC-Nick, Mail und Google Drive gleich mit ab
+- Zeitplan in eigener Datei (`routes/indexer-schedule.php`), kommt mit jedem Update mit
+
+### Geändert
+- Neue oder gelöschte Blacklist-Regeln gelten nach spätestens 10 Minuten auch für vorhandene Releases
+- Anzeige und Zeitplan in deutscher Zeit (`INDEXER_TIMEZONE`), gespeichert wird weiter in UTC
+- "Passwort vergessen", "Neues Passwort", E-Mail bestätigen und "Profil & Passwort" im dunklen Design
+
 ## [1.11.1] – 2026-10-31
 
 ### Behoben

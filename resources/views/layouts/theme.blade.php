@@ -133,6 +133,11 @@ details.tm-menu[open] .tm-avatar, .tm-avatar:hover { border-color: var(--tm-acce
 .tm-chip { display: inline-block; padding: 1px 7px; border-radius: 5px; background: var(--tm-panel-2); border: 1px solid var(--tm-line); color: var(--tm-text); font-size: 11.5px; font-weight: 600; white-space: nowrap; }
 .tm-chip.accent { background: rgba(245, 158, 11, .14); border-color: rgba(245, 158, 11, .35); color: var(--tm-accent-2); }
 .tm-chip.bad { background: rgba(248, 113, 113, .12); border-color: rgba(248, 113, 113, .35); color: var(--tm-bad); }
+.tm-report { display: inline-block; position: relative; vertical-align: middle; }
+.tm-report > summary { list-style: none; width: 30px; padding: 0; color: var(--tm-muted) !important; }
+.tm-report > summary::-webkit-details-marker { display: none; }
+.tm-report[open] > summary { border-color: var(--tm-accent); color: var(--tm-text) !important; }
+.tm-report-box { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; width: 240px; padding: 12px; text-align: left; white-space: normal; background: var(--tm-panel-2); border: 1px solid var(--tm-line-2); border-radius: 10px; box-shadow: 0 12px 30px rgba(0, 0, 0, .45); }
 .tm-arrow { position: absolute; top: 38%; z-index: 5; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--tm-line-2); background: rgba(10, 13, 18, .85); color: var(--tm-text); cursor: pointer; }
 .tm-arrow:hover { border-color: var(--tm-accent); color: var(--tm-accent); }
 .tm-arrow.left { left: -12px; }
@@ -287,6 +292,26 @@ details.tm-menu[open] .tm-avatar, .tm-avatar:hover { border-color: var(--tm-acce
             });
         }
     });
+    // "Release melden": Fenster frei über der Seite, damit die scrollbare Tabelle es nicht abschneidet
+    function placeReport(d) {
+        var box = d.querySelector('.tm-report-box'), r = d.querySelector('summary').getBoundingClientRect();
+        box.style.position = 'fixed';
+        box.style.left = Math.max(8, Math.min(r.right - 240, window.innerWidth - 248)) + 'px';
+        var below = r.bottom + 6, h = box.offsetHeight || 170;
+        box.style.top = (below + h > window.innerHeight - 8 ? Math.max(8, r.top - h - 6) : below) + 'px';
+        box.style.right = 'auto';
+    }
+    document.addEventListener('toggle', function (e) {
+        var d = e.target;
+        if (!d.classList || !d.classList.contains('tm-report') || !d.open) return;
+        document.querySelectorAll('.tm-report[open]').forEach(function (o) { if (o !== d) o.open = false; });
+        placeReport(d);
+    }, true);
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.tm-report')) document.querySelectorAll('.tm-report[open]').forEach(function (o) { o.open = false; });
+    });
+    window.addEventListener('scroll', function () { document.querySelectorAll('.tm-report[open]').forEach(function (o) { o.open = false; }); }, { passive: true });
+
     // Strg+K / Cmd+K springt in die Suche
     document.addEventListener('keydown', function (e) {
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {

@@ -38,7 +38,7 @@
         <div class="tm-muted tm-small">Laufzeit</div>
         @if ($upText)
             <div class="v" style="font-size:20px;padding:4px 0">{{ $upText }}</div>
-            <div class="tm-muted tm-small">aktualisiert {{ now()->format('H:i:s') }}</div>
+            <div class="tm-muted tm-small">aktualisiert {{ \App\Support\Format::dt(now(), 'H:i:s') }}</div>
         @else {!! $na !!} @endif
     </div>
 </div>

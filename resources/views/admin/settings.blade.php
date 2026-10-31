@@ -43,6 +43,14 @@
                     <p class="tm-muted tm-small" style="margin-top:6px">Codes erzeugst du unter <a class="tm-link" href="{{ route('admin.invites') }}">Einladungen</a>. Bestehende User sind nicht betroffen.</p>
                 </div>
 
+                <div>
+                    <label class="tm-small" style="display:flex;align-items:center;gap:8px">
+                        <input type="checkbox" name="admin_require_2fa" value="1" @checked(old('admin_require_2fa', $require2fa))> Zwei-Faktor-Anmeldung für alle Admins verlangen
+                    </label>
+                    <p class="tm-muted tm-small" style="margin-top:6px">Admins ohne Zwei-Faktor müssen es vor dem nächsten Klick im Admin-Bereich einrichten. <a class="tm-link" href="{{ route('admin.2fa') }}">Zwei-Faktor einrichten</a></p>
+                    @error('admin_require_2fa')<ul class="tm-error"><li>{{ $message }}</li></ul>@enderror
+                </div>
+
                 <div><button class="tm-btn tm-btn-primary">Speichern</button></div>
             </form>
         </section>

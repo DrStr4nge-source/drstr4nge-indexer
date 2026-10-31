@@ -1,6 +1,9 @@
 <?php
 return [
-    'version' => '1.11.1',
+    'version' => '1.12.0',
+    // Zeitzone für Anzeige und Zeitplan (gespeichert wird in UTC)
+    'timezone' => env('INDEXER_TIMEZONE', 'Europe/Berlin'),
+
     'nntp' => [
         'host' => env('NNTP_HOST'),
         'port' => (int) env('NNTP_PORT', 563),
@@ -29,6 +32,12 @@ return [
         'title_ignore' => env('SCRAPE_IRC_TITLE_IGNORE', ''),
     ],
 
+    // TVmaze: TVDB-/IMDb-/TVmaze-IDs für Serien ergänzen (indexer:tvmaze, stündlich)
+    'tvmaze' => (bool) env('TVMAZE_ENABLED', true),
+
+    // Verschleierte Releases über Größe/Dateianzahl/Zeit mit der PreDB benennen (indexer:pre-deobfuscate)
+    'pre_deobfuscate' => (bool) env('PRE_DEOBFUSCATE', true),
+
     // Pre-Daten von predb.net (indexer:pre-fetch, alle 5 Minuten)
     'predb_api' => [
         'enabled' => (bool) env('PREDB_API_ENABLED', true),
@@ -40,6 +49,26 @@ return [
 
     // Pre-Daten aus RSS-Feeds (mit indexer:pre-fetch, alle 5 Minuten), mehrere mit Komma trennen, leer = aus
     'pre_rss' => array_values(array_filter(array_map('trim', explode(',', (string) env('PRE_RSS_FEEDS', 'https://predb.me/?rss=1'))))),
+
+    // Warn-Mails (indexer:health, alle 15 Minuten)
+    'alerts' => [
+        'email' => env('ALERT_EMAIL'),                          // leer = alle Admins
+        'crawl_hours' => (int) env('ALERT_CRAWL_HOURS', 6),     // Crawler findet so lange nichts: Warnung
+        'irc_minutes' => (int) env('ALERT_IRC_MINUTES', 30),
+        'disk_percent' => (int) env('ALERT_DISK_PERCENT', 90),
+        'repeat_hours' => (int) env('ALERT_REPEAT_HOURS', 12),  // gleiche Warnung höchstens so oft
+    ],
+
+    // Tägliche Sicherung (indexer:backup)
+    'backup' => [
+        'enabled' => (bool) env('BACKUP_ENABLED', true),
+        'path' => env('BACKUP_PATH', storage_path('app/backups')),
+        'keep_days' => (int) env('BACKUP_KEEP_DAYS', 7),
+        'time' => env('BACKUP_TIME', '03:30'),
+        'remote' => env('BACKUP_REMOTE'),               // rsync-Ziel, z.B. backup@server2:/srv/backups/
+        'rclone_remote' => env('BACKUP_RCLONE_REMOTE'), // z.B. gdrive:drstr4nge-backups (vorher "rclone config")
+        'rclone_config' => env('BACKUP_RCLONE_CONFIG'), // optional, Pfad zur rclone.conf
+    ],
     'min_completion'     => (int) env('INDEXER_MIN_COMPLETION', 90), // % Teile, ab denen ein Release sichtbar ist
     'free_grabs_per_day' => (int) env('INDEXER_FREE_GRABS', 5),     // VIP = unbegrenzt
     'retention_days'     => (int) env('INDEXER_RETENTION_DAYS', 1000), // ältere Releases werden gelöscht

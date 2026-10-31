@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version 1.11.1" src="https://img.shields.io/badge/version-1.11.1-f59e0b">
+  <img alt="Version 1.12.0" src="https://img.shields.io/badge/version-1.12.0-f59e0b">
   <img alt="PHP 8.5" src="https://img.shields.io/badge/PHP-8.5-777bb4">
   <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12%20%7C%2013-ff2d20">
   <img alt="Ubuntu 24.04" src="https://img.shields.io/badge/Ubuntu-24.04%20LTS-e95420">
@@ -31,6 +31,8 @@ Die Oberfläche ist auf Deutsch.
 - Erkennung passwortgeschützter RAR-Archive (RAR4 und RAR5)
 - Spam-Schutz: Blacklist für Poster und Namen (Regex), Spam-Wörter, nur ausführbare Dateien, zu kleine Releases
 - Automatisches Aufräumen: alte, unvollständige, verschleierte, passwortgeschützte und Spam-Releases
+- Verschleierte Releases werden über PAR2 und zusätzlich über die PreDB (Größe, Dateianzahl, Zeit) benannt
+- Serien-IDs (TVDB, TVmaze) über TVmaze für zuverlässigere Treffer in Sonarr
 - Pre-Daten aus IRC (#PreNNTmux, #nZEDbPRE), von predb.net und per RSS (predb.me): Pre-Zeit und Nukes direkt an den Releases
 - NZB-Export, optional Volltextsuche mit Manticore Search (sonst MySQL)
 
@@ -40,6 +42,8 @@ Die Oberfläche ist auf Deutsch.
 - Newznab-API mit `search`, `tvsearch`, `movie`, `get` sowie Suche über IMDb-, TMDB- und TVDB-ID
 - Konto-Seite mit API-Key und Download-Verlauf, Tageslimit für kostenlose Konten
 - Registrierung: offen, nur mit Einladungscode oder geschlossen
+- Merkliste für Filme und Serien, RSS-Feeds (neu, Merkliste, Kategorien) für NZBGet/SABnzbd
+- Releases melden (defekt, Passwort, falscher Name, Spam)
 
 **VIP und Zahlung**
 - VIP ohne Download-Limit und mit höherem API-Limit
@@ -47,10 +51,15 @@ Die Oberfläche ist auf Deutsch.
 - Freischaltung automatisch nach bestätigter Zahlung, Rückmeldungen werden per Signatur geprüft
 
 **Für Admins**
-- Übersicht mit Server-Auslastung (CPU, RAM, Speicherplatz), User-Verwaltung (VIP, Sperren, Admin), Newsgroups (inkl. "Neu einlesen")
+- Übersicht mit Betrieb (Crawler, Sicherung, Pre-Daten) und Server-Auslastung (CPU, RAM, Speicherplatz), User-Verwaltung (VIP, Sperren, Admin), Newsgroups (inkl. "Neu einlesen")
 - Releases prüfen mit Filtern, Suche und Mehrfachauswahl (freigeben, Spam, löschen, Poster sperren)
 - PreDB mit Status und Einstellungen des IRC-Scrapers (Kanäle direkt im Admin änderbar), Blacklist, Zahlungen, Einladungscodes
+- Zugangsdaten im Admin: Usenet, TMDB, Mail, Zahlung, Sicherung, ohne `.env`
 - Einstellungen: Name der Seite, eigenes Logo, Registrierungs-Modus
+- Zwei-Faktor-Anmeldung (Code-App), auf Wunsch Pflicht für alle Admins
+- Tägliche Sicherung, auf Wunsch zusätzlich nach Google Drive
+- Überwachung mit Warn-Mails (Crawler steht, IRC getrennt, Platte voll, Sicherung fehlt) und Log-Ansicht
+- Meldungen der User bearbeiten, `indexer:status` zeigt alles auf einen Blick
 - Verbindungstest zum Usenet-Provider mit verständlichen Fehlermeldungen
 
 ## Screenshots
@@ -85,13 +94,25 @@ Passwort des ersten Admins auf dem Bildschirm.
 
 Danach:
 
-1. In `/var/www/indexer/.env` den Usenet-Zugang eintragen (`NNTP_HOST`, `NNTP_USER`, `NNTP_PASS`), optional `TMDB_API_KEY`
-   und die Zahlungsdaten. Dann `php artisan config:clear`.
+1. Falls bei der Installation nicht angegeben: im Admin unter **Zugangsdaten** den Usenet-Zugang eintragen, optional TMDB-Key,
+   Mail und Zahlung.
 2. Verbindung prüfen: `cd /var/www/indexer && php artisan indexer:test-nntp`
 3. Einloggen, im Admin unter "Newsgroups" Gruppen eintragen, unter "Einstellungen" Name, Logo und Registrierung festlegen.
 4. Ersten Crawl starten: `sudo -u www-data php artisan indexer:crawl`. Danach läuft alles automatisch per Cronjob.
 
-Die ausführliche Anleitung mit manueller Installation, allen Einstellungen, Update und Fehlersuche steht in
+Das Skript fragt auch nach Usenet-Zugang, TMDB-Key, IRC-Nick, Mail-Versand und Google-Drive-Sicherung. Alles davon lässt sich
+auch später im Admin unter **Zugangsdaten** eintragen.
+
+## Update
+
+```bash
+cd /tmp && rm -rf dsi && git clone -q https://github.com/DrStr4nge-source/drstr4nge-indexer.git dsi && sudo bash dsi/update.sh
+```
+
+Daten, `.env`, Logo, Cover und Einstellungen bleiben erhalten. Das Skript ergänzt neue `.env`-Einträge, aktualisiert Datenbank und
+Zeitplan und startet die Dienste neu.
+
+Die ausführliche Anleitung mit manueller Installation, allen Einstellungen und Fehlersuche steht in
 **[docs/ANLEITUNG.md](docs/ANLEITUNG.md)**.
 
 ## Wichtige Einstellungen (.env)
@@ -110,6 +131,9 @@ Die ausführliche Anleitung mit manueller Installation, allen Einstellungen, Upd
 | `NOWPAYMENTS_API_KEY`, `NOWPAYMENTS_IPN_SECRET`, `NOWPAYMENTS_PAY_CURRENCY` | NOWPayments, z.B. `xmr` für nur Monero | – |
 | `SCRAPE_IRC_USERNAME`, `SCRAPE_IRC_CHANNELS` | Pre-Daten aus IRC (Nick leer = aus) | – |
 | `PREDB_API_ENABLED` | Pre-Daten von predb.net | true |
+| `BACKUP_KEEP_DAYS`, `BACKUP_RCLONE_REMOTE` | Sicherung: Tage, Cloud-Ziel (z.B. `gdrive:drstr4nge-backups`) | 7, – |
+| `ALERT_EMAIL` | Warn-Mails an (leer = alle Admins) | – |
+| `INDEXER_TIMEZONE` | Zeitzone für Anzeige und Zeitplan | Europe/Berlin |
 | `MANTICORE_ENABLED` | Volltextsuche mit Manticore | false |
 
 Alle Einträge mit Erklärung stehen in [`env.additions.txt`](env.additions.txt), VIP-Preise und Kategorien in
@@ -129,6 +153,8 @@ routes/       Seiten, Newznab-API, Admin, Webhooks
 tests/        Unit- und Feature-Tests (php artisan test)
 docs/         Anleitung und Screenshots
 install.sh    Installer für Ubuntu 24.04
+update.sh     Update einer bestehenden Installation
+setup-gdrive.sh  Google-Drive-Sicherung auf dem Server einrichten (geht auch im Admin)
 ```
 
 ## Rechtlicher Hinweis

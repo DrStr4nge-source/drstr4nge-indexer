@@ -23,6 +23,17 @@ class AdminController extends Controller
             'grabs' => Download::where('created_at', '>=', now()->startOfDay())->count(),
             'income' => Payment::where('status', 'paid')->sum('amount'),
             'system' => SystemStats::collect(base_path()),
+            'problems' => \Illuminate\Support\Facades\Cache::get('health.problems', []),
+            'ops' => [
+                'backup' => \Illuminate\Support\Facades\Cache::get('backup.last_at'),
+                'backupError' => \Illuminate\Support\Facades\Cache::get('backup.error'),
+                'crawl' => \Illuminate\Support\Facades\Cache::get('schedule.last.crawl'),
+                'running' => count(\App\Support\CrawlLock::running(Newsgroup::pluck('id'))),
+                'irc' => \Illuminate\Support\Facades\Cache::get('pre_irc.connected_at'),
+                'pres' => \App\Models\Predb::where('created_at', '>=', now()->startOfDay())->count(),
+                'reports' => \App\Models\ReleaseReport::where('status', 'open')->count(),
+            ],
+            'no2fa' => !request()->user()->hasTwoFactor(),
         ]);
     }
 
@@ -185,13 +196,15 @@ class AdminController extends Controller
         }
         Blacklist::create($data);
         Blacklist::flush();
-        return back();
+        \Illuminate\Support\Facades\Cache::forever('blacklist.changed', time()); // Zeitplan prüft vorhandene Releases neu
+        return back()->with('status', 'Regel gespeichert. Vorhandene Releases werden in den nächsten 10 Minuten neu geprüft.');
     }
 
     public function destroyBlacklist(Blacklist $rule)
     {
         $rule->delete();
         Blacklist::flush();
-        return back();
+        \Illuminate\Support\Facades\Cache::forever('blacklist.changed', time());
+        return back()->with('status', 'Regel gelöscht. Vorhandene Releases werden in den nächsten 10 Minuten neu geprüft.');
     }
 }

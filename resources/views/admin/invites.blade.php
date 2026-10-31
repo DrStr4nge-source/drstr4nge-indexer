@@ -26,12 +26,12 @@
                             <td class="tm-hide-sm tm-muted">{{ $i->note }}</td>
                             <td class="nowrap">
                                 @if ($i->used_by)
-                                    <span class="tm-chip">benutzt</span> <span class="tm-muted tm-small">{{ $i->user?->name }} · {{ $i->used_at?->format('d.m.Y') }}</span>
+                                    <span class="tm-chip">benutzt</span> <span class="tm-muted tm-small">{{ $i->user?->name }} · {{ \App\Support\Format::dt($i->used_at, 'd.m.Y') }}</span>
                                 @else
                                     <span class="tm-chip accent">frei</span>
                                 @endif
                             </td>
-                            <td class="tm-hide-sm nowrap tm-muted">{{ $i->created_at->format('d.m.Y') }}</td>
+                            <td class="tm-hide-sm nowrap tm-muted">{{ \App\Support\Format::dt($i->created_at, 'd.m.Y') }}</td>
                             <td class="num">
                                 <div class="tm-form-row" style="justify-content:flex-end;flex-wrap:nowrap;gap:6px">
                                     @unless ($i->used_by)

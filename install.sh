@@ -21,6 +21,12 @@ ADMIN_EMAIL="${ADMIN_EMAIL:-}"
 INSTALL_MANTICORE="${INSTALL_MANTICORE:-}"     # ja | nein
 INSTALL_SSL="${INSTALL_SSL:-}"                 # ja | nein
 NONINTERACTIVE="${NONINTERACTIVE:-0}"          # 1 = keine Fragen, Standardwerte nehmen
+# Optional schon bei der Installation (leer = später in der .env bzw. im Admin)
+NNTP_HOST="${NNTP_HOST:-}" NNTP_PORT="${NNTP_PORT:-}" NNTP_SSL="${NNTP_SSL:-}"
+NNTP_USER="${NNTP_USER:-}" NNTP_PASS="${NNTP_PASS:-}" NNTP_CONNECTIONS="${NNTP_CONNECTIONS:-}"
+BACKFILL_DAYS="${BACKFILL_DAYS:-}" TMDB_API_KEY="${TMDB_API_KEY:-}" IRC_NICK="${IRC_NICK:-}"
+MAIL_HOST="${MAIL_HOST:-}" MAIL_PORT="${MAIL_PORT:-}" MAIL_USERNAME="${MAIL_USERNAME:-}" MAIL_PASSWORD="${MAIL_PASSWORD:-}"
+MAIL_FROM="${MAIL_FROM:-}" ALERT_EMAIL="${ALERT_EMAIL:-}" SETUP_GDRIVE="${SETUP_GDRIVE:-}"
 NODE_MAJOR="${NODE_MAJOR:-24}"
 DB_NAME="${DB_NAME:-indexer}"
 DB_USER="${DB_USER:-indexer}"
@@ -63,6 +69,15 @@ ask() {
     fi
     read -rp "$question [${default}]: " answer
     printf -v "$var" '%s' "${answer:-$default}"
+}
+
+# ask_secret VAR "Frage": Eingabe wird nicht angezeigt (und nicht ins Log geschrieben)
+ask_secret() {
+    local var=$1 question=$2 answer
+    if [[ -n "${!var}" || "$NONINTERACTIVE" == "1" || ! -t 0 ]]; then return; fi
+    read -rsp "$question: " answer
+    echo
+    printf -v "$var" '%s' "$answer"
 }
 
 random_secret() { openssl rand -hex 16; }
@@ -115,6 +130,19 @@ PHP
 
 set_env() { php "$ENV_TOOL" "$APP_DIR/.env" "$1" "$2" "${3:-}"; }
 
+# Neue Einträge aus env.additions.txt in die .env übernehmen (vorhandene bleiben unverändert)
+merge_env_additions() {
+    local line key value
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        [[ "$line" =~ ^[[:space:]]*# || ! "$line" =~ = ]] && continue
+        key="${line%%=*}"
+        value="${line#*=}"
+        [[ "$key" =~ ^[A-Z0-9_]+$ ]] || continue
+        if [[ "$value" =~ ^\"(.*)\"$ ]]; then value="${BASH_REMATCH[1]}"; fi   # Anführungszeichen setzt set_env selbst
+        set_env "$key" "$value" if-missing
+    done < "$SCRIPT_DIR/env.additions.txt"
+}
+
 # composer.json: "php": "^8.5" eintragen (Objekte bleiben Objekte)
 require_php_in_composer() {
     php -r '
@@ -127,26 +155,22 @@ require_php_in_composer() {
     ' "$1"
 }
 
-# Zeitplan in routes/console.php ergänzen (nur einmal)
+# Zeitplan: routes/console.php bindet routes/indexer-schedule.php ein (kommt mit jedem Update mit).
+# Alte, direkt eingetragene indexer-Zeilen werden entfernt, damit nichts doppelt läuft.
 add_schedule() {
-    local file=$1 manticore=$2
-    # Neuere Einträge auch bei bestehendem Zeitplan ergänzen
-    if grep -q 'indexer:crawl' "$file"; then
-        grep -q 'indexer:pre-fetch' "$file" || echo "\\Illuminate\\Support\\Facades\\Schedule::command('indexer:pre-fetch')->everyFiveMinutes()->withoutOverlapping();" >> "$file"
-        return 0
-    fi
-    {
-        echo ''
-        echo '// --- DrStr4nge Indexer ---'
-        echo "\\Illuminate\\Support\\Facades\\Schedule::command('indexer:crawl')->everyTenMinutes()->withoutOverlapping();"
-        echo "\\Illuminate\\Support\\Facades\\Schedule::command('indexer:inspect')->everyFifteenMinutes()->withoutOverlapping();"
-        echo "\\Illuminate\\Support\\Facades\\Schedule::command('indexer:metadata')->everyThirtyMinutes()->withoutOverlapping();"
-        echo "\\Illuminate\\Support\\Facades\\Schedule::command('indexer:cleanup')->dailyAt('04:00');"
-        echo "\\Illuminate\\Support\\Facades\\Schedule::command('indexer:pre-fetch')->everyFiveMinutes()->withoutOverlapping();"
-        if is_yes "$manticore"; then
-            echo "\\Illuminate\\Support\\Facades\\Schedule::command('indexer:search-index')->weeklyOn(1, '05:00');"
-        fi
-    } >> "$file"
+    local file=$1
+    [[ -f "$file" ]] || printf '<?php\n' > "$file"
+    sed -i -e "/Schedule::command('indexer:/d" -e '/^\/\/ --- DrStr4nge Indexer ---$/d' "$file"
+    grep -q "indexer-schedule.php" "$file" || printf "\nrequire __DIR__ . '/indexer-schedule.php'; // DrStr4nge Indexer\n" >> "$file"
+}
+
+# IndexerServiceProvider in bootstrap/providers.php eintragen (Einstellungen aus dem Admin)
+add_provider() {
+    local file=$1
+    [[ -f "$file" ]] || return 0
+    grep -q 'IndexerServiceProvider' "$file" && return 0
+    sed -i 's/^return \[/return [\n    App\\Providers\\IndexerServiceProvider::class,/' "$file"
+    grep -q 'IndexerServiceProvider' "$file" || warn "IndexerServiceProvider nicht eingetragen: $file von Hand ergänzen"
 }
 
 write_nginx_site() {
@@ -260,12 +284,51 @@ ask_settings() {
         ask INSTALL_SSL "SSL-Zertifikat von Let's Encrypt holen? Domain muss schon auf den Server zeigen (ja/nein)" "nein"
     fi
     ok "Domain: $DOMAIN | Admin: $ADMIN_EMAIL | Manticore: $INSTALL_MANTICORE | SSL: $INSTALL_SSL"
+
+    info "Usenet-Zugang (leer lassen = später in der .env eintragen)"
+    ask NNTP_HOST "Usenet-Server, z.B. news.example.com" ""
+    if [[ -n "$NNTP_HOST" ]]; then
+        valid_domain "$NNTP_HOST" || die "Ungültiger Usenet-Server: $NNTP_HOST"
+        ask NNTP_SSL "SSL verwenden? (ja/nein)" "ja"
+        ask NNTP_PORT "Port" "$(is_yes "$NNTP_SSL" && echo 563 || echo 119)"
+        [[ "$NNTP_PORT" =~ ^[0-9]{1,5}$ ]] || die "Ungültiger Port: $NNTP_PORT"
+        ask NNTP_USER "Benutzername beim Provider" ""
+        ask_secret NNTP_PASS "Passwort beim Provider (wird nicht angezeigt)"
+        ask NNTP_CONNECTIONS "Gleichzeitige Verbindungen (höchstens so viele, wie dein Provider erlaubt)" "4"
+        [[ "$NNTP_CONNECTIONS" =~ ^[0-9]{1,2}$ ]] || die "Ungültige Anzahl Verbindungen: $NNTP_CONNECTIONS"
+    fi
+    ask BACKFILL_DAYS "Erster Crawl einer Gruppe: wie viele Tage zurück? (0 = die neuesten 100.000 Artikel)" "7"
+    [[ "$BACKFILL_DAYS" =~ ^[0-9]{1,4}$ ]] || die "Ungültige Tage: $BACKFILL_DAYS"
+
+    info "Cover und Filminfos"
+    ask TMDB_API_KEY "TMDB-API-Key (kostenlos auf themoviedb.org, leer = später)" ""
+
+    info "Pre-Daten aus IRC (#PreNNTmux, #nZEDbPRE auf synIRC)"
+    ask IRC_NICK "IRC-Nick, eindeutig und normal aussehend (leer = später im Admin unter PreDB)" ""
+    [[ -z "$IRC_NICK" || "$IRC_NICK" =~ ^[A-Za-z][A-Za-z0-9_-]{1,29}$ ]] || die "Ungültiger Nick: $IRC_NICK (Buchstaben, Ziffern, _ und -)"
+
+    info "Mail-Versand (für Passwort vergessen und Warnungen, leer = später)"
+    ask MAIL_HOST "SMTP-Server, z.B. smtp.example.com" ""
+    if [[ -n "$MAIL_HOST" ]]; then
+        valid_domain "$MAIL_HOST" || die "Ungültiger SMTP-Server: $MAIL_HOST"
+        ask MAIL_PORT "SMTP-Port (587 oder 465)" "587"
+        [[ "$MAIL_PORT" =~ ^[0-9]{1,5}$ ]] || die "Ungültiger Port: $MAIL_PORT"
+        ask MAIL_USERNAME "SMTP-Benutzer" ""
+        ask_secret MAIL_PASSWORD "SMTP-Passwort (wird nicht angezeigt)"
+        ask MAIL_FROM "Absender-Adresse" "${MAIL_USERNAME:-noreply@${DOMAIN}}"
+        [[ "$MAIL_FROM" =~ ^[^@[:space:]]+@[^@[:space:]]+$ ]] || die "Ungültige Absender-Adresse: $MAIL_FROM"
+    fi
+    ask ALERT_EMAIL "Warnungen (Crawler steht, Platte voll, Sicherung fehlt) an" "$ADMIN_EMAIL"
+
+    info "Sicherung"
+    echo "    Die Datenbank wird jede Nacht gesichert (7 Tage, in ${APP_DIR}/storage/app/backups)."
+    ask SETUP_GDRIVE "Sicherungen zusätzlich nach Google Drive kopieren? Braucht am Ende einmal einen PC mit Browser (ja/nein)" "nein"
 }
 
 install_base() {
     info "Basis-Pakete"
     apt-get update -y
-    apt-get install -y ca-certificates curl gnupg unzip git software-properties-common acl cron openssl
+    apt-get install -y ca-certificates curl gnupg unzip git software-properties-common acl cron openssl rsync rclone
     ok "Basis-Pakete installiert"
 }
 
@@ -415,7 +478,8 @@ install_indexer() {
     cp -a "$SCRIPT_DIR/docker-compose.manticore.yml" "$APP_DIR/" 2>/dev/null || true
     require_php_in_composer "$APP_DIR/composer.json"
     (cd "$APP_DIR" && composer update --lock --no-interaction) || warn "composer.lock-Hash nicht aktualisiert (harmlos)."
-    add_schedule "$APP_DIR/routes/console.php" "$INSTALL_MANTICORE"
+    add_schedule "$APP_DIR/routes/console.php"
+    add_provider "$APP_DIR/bootstrap/providers.php"
     ok "Dateien kopiert, PHP ^8.5 in composer.json, Zeitplan eingetragen"
 }
 
@@ -433,15 +497,31 @@ configure_env() {
     set_env DB_DATABASE "$DB_NAME"
     set_env DB_USERNAME "$DB_USER"
     set_env DB_PASSWORD "$DB_PASS"
-    # Indexer-Einstellungen aus env.additions.txt (nur wenn noch nicht gesetzt)
-    local line key value
-    while IFS= read -r line || [[ -n "$line" ]]; do
-        [[ "$line" =~ ^[[:space:]]*# || ! "$line" =~ = ]] && continue
-        key="${line%%=*}"
-        value="${line#*=}"
-        [[ "$key" =~ ^[A-Z0-9_]+$ ]] || continue
-        set_env "$key" "$value" if-missing
-    done < "$SCRIPT_DIR/env.additions.txt"
+    merge_env_additions
+    if [[ -n "$NNTP_HOST" ]]; then
+        set_env NNTP_HOST "$NNTP_HOST"
+        set_env NNTP_PORT "$NNTP_PORT"
+        set_env NNTP_SSL "$(is_yes "$NNTP_SSL" && echo true || echo false)"
+        set_env NNTP_USER "$NNTP_USER"
+        set_env NNTP_PASS "$NNTP_PASS"
+        set_env NNTP_CONNECTIONS "$NNTP_CONNECTIONS"
+    fi
+    [[ -n "$BACKFILL_DAYS" ]] && set_env INDEXER_BACKFILL_DAYS "$BACKFILL_DAYS"
+    [[ -n "$TMDB_API_KEY" ]] && set_env TMDB_API_KEY "$TMDB_API_KEY"
+    if [[ -n "$IRC_NICK" ]]; then
+        set_env SCRAPE_IRC_USERNAME "$IRC_NICK"
+        set_env SCRAPE_IRC_REALNAME "$IRC_NICK"
+    fi
+    if [[ -n "$MAIL_HOST" ]]; then
+        set_env MAIL_MAILER smtp
+        set_env MAIL_HOST "$MAIL_HOST"
+        set_env MAIL_PORT "$MAIL_PORT"
+        set_env MAIL_USERNAME "$MAIL_USERNAME"
+        set_env MAIL_PASSWORD "$MAIL_PASSWORD"
+        set_env MAIL_FROM_ADDRESS "$MAIL_FROM"
+        set_env MAIL_FROM_NAME "DrStr4nge Indexer"
+    fi
+    [[ -n "$ALERT_EMAIL" ]] && set_env ALERT_EMAIL "$ALERT_EMAIL"
     if is_yes "$INSTALL_MANTICORE"; then
         set_env MANTICORE_ENABLED true
     fi
@@ -501,15 +581,17 @@ summary() {
  Log:          ${LOG_FILE}
 
  Jetzt noch erledigen:
- 1. In der .env deinen Usenet-Zugang eintragen: NNTP_HOST, NNTP_USER, NNTP_PASS
-    Optional: TMDB_API_KEY (Cover), BTCPAY_* (Krypto-Zahlung)
-    Danach: cd ${APP_DIR} && sudo -u ${WEB_USER} php artisan config:clear
+ 1. $( [[ -n "$NNTP_HOST" ]] && echo "Usenet-Zugang ist eingetragen." || echo "In der .env deinen Usenet-Zugang eintragen: NNTP_HOST, NNTP_USER, NNTP_PASS" )
+    Optional in der .env: Zahlung (PAYMENT_PROVIDER, NOWPAYMENTS_*), danach:
+    cd ${APP_DIR} && sudo -u ${WEB_USER} php artisan config:clear
  2. Verbindung prüfen: cd ${APP_DIR} && php artisan indexer:test-nntp
     Einloggen, im Admin-Bereich unter "Newsgroups" Gruppen eintragen.
     Name der Seite und Logo: Admin > Einstellungen.
  3. Ersten Crawl starten:
     cd ${APP_DIR} && sudo -u ${WEB_USER} php artisan indexer:crawl
     Danach läuft alles automatisch über den Cronjob.
+ 4. Empfohlen: Admin > Zwei-Faktor einrichten.
+ Update später:  cd /tmp && rm -rf dsi && git clone -q https://github.com/DrStr4nge-source/drstr4nge-indexer.git dsi && sudo bash dsi/update.sh
 =============================================================================
 EOF
 }
@@ -538,6 +620,9 @@ main() {
     install_nginx
     finish_app
     install_ssl
+    if is_yes "$SETUP_GDRIVE"; then
+        bash "$SCRIPT_DIR/setup-gdrive.sh" || warn "Google Drive nicht eingerichtet. Später: sudo bash setup-gdrive.sh"
+    fi
     summary
 }
 

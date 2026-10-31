@@ -14,6 +14,7 @@ class SettingsController extends Controller
             'siteName' => Setting::get('site_name', config('app.name')),
             'logoPath' => Setting::get('logo_path'),
             'registrationMode' => \App\Support\Registration::mode(),
+            'require2fa' => Setting::get('admin_require_2fa') === '1',
         ]);
     }
 
@@ -31,7 +32,11 @@ class SettingsController extends Controller
             'logo.dimensions' => 'Das Logo darf höchstens 2000 x 2000 Pixel groß sein.',
         ]);
 
+        if ($request->boolean('admin_require_2fa') && !$request->user()->hasTwoFactor()) {
+            return back()->withInput()->withErrors(['admin_require_2fa' => 'Richte zuerst für dich selbst Zwei-Faktor ein, sonst sperrst du dich aus.']);
+        }
         Setting::put('site_name', trim($data['site_name']));
+        Setting::put('admin_require_2fa', $request->boolean('admin_require_2fa') ? '1' : null);
         if (!empty($data['registration_mode'])) {
             Setting::put('registration_mode', $data['registration_mode']);
         }

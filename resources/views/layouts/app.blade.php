@@ -22,7 +22,7 @@
             @isset($header)
                 <div class="tm-page-head">{{ $header }}</div>
             @endisset
-            @if (session('status'))
+            @if (session('status') && !in_array(session('status'), ['profile-updated', 'password-updated', 'verification-link-sent'], true))
                 <div class="tm-alert ok">{{ session('status') }}</div>
             @endif
             {{ $slot }}

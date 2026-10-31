@@ -26,6 +26,10 @@
                     <p class="tm-muted" style="max-width:70ch">{{ $media->overview }}</p>
                 @endif
                 <div class="tm-hero-actions">
+                    @php($tmWatched = \App\Models\Watch::where('user_id', auth()->id())->where('media_id', $media->id)->exists())
+                    <form method="POST" action="{{ route('watch.toggle', $media) }}">@csrf
+                        <button class="tm-btn {{ $tmWatched ? '' : 'tm-btn-primary' }}">{{ $tmWatched ? '✓ Gemerkt' : '+ Merken' }}</button>
+                    </form>
                     @if ($media->imdbUrl())<a class="tm-btn" href="{{ $media->imdbUrl() }}" target="_blank" rel="noopener">IMDb</a>@endif
                     @if ($media->tmdbUrl())<a class="tm-btn" href="{{ $media->tmdbUrl() }}" target="_blank" rel="noopener">TMDB</a>@endif
                 </div>

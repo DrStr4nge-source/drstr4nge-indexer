@@ -68,6 +68,7 @@ class PreFetch extends Command
             }
         } catch (\RuntimeException $e) {
             $this->error($e->getMessage());
+            \Illuminate\Support\Facades\Log::warning('Pre holen: ' . $e->getMessage());
             $this->info("Bis dahin: $new neu, $upd aktualisiert.");
             return self::FAILURE;
         }
@@ -90,6 +91,7 @@ class PreFetch extends Command
                 $this->info(parse_url($url, PHP_URL_HOST) . ": $new neu");
             } catch (\Throwable $e) {
                 $this->error($e->getMessage());
+                \Illuminate\Support\Facades\Log::warning('Pre-RSS: ' . $e->getMessage());
                 $ok = false;
             }
         }

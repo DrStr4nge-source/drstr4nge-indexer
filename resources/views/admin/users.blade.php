@@ -15,7 +15,7 @@
                     @foreach ($users as $u)
                         <tr>
                             <td>{{ $u->email }} @if ($u->is_banned)<span class="tm-chip" style="color:var(--tm-bad)">gesperrt</span>@endif</td>
-                            <td class="nowrap">@if ($u->isVip())<span class="tm-chip accent">{{ $u->vip_until->format('d.m.Y') }}</span>@else <span class="tm-muted">–</span> @endif</td>
+                            <td class="nowrap">@if ($u->isVip())<span class="tm-chip accent">{{ \App\Support\Format::dt($u->vip_until, 'd.m.Y') }}</span>@else <span class="tm-muted">–</span> @endif</td>
                             <td>{{ $u->is_admin ? 'Admin' : 'User' }}</td>
                             <td>
                                 <form method="POST" action="{{ route('admin.users.update', $u) }}" class="tm-form-row" style="flex-wrap:nowrap">@csrf

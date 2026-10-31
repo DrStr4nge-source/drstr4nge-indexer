@@ -33,6 +33,7 @@ class InspectReleases extends Command
                 $this->inspect($nntp, $rel, $builder);
             } catch (\RuntimeException $e) { // Netzwerkfehler: Rest beim nächsten Lauf
                 $this->error($e->getMessage());
+                \Illuminate\Support\Facades\Log::warning('Prüfen (PAR2/RAR): ' . $e->getMessage());
                 break;
             }
             $rel->inspected = true;
@@ -53,6 +54,12 @@ class InspectReleases extends Command
             $bin = $par ? $this->firstSegment($nntp, $files[$par]) : null;
             $found = $bin ? Par2::fileNames($bin) : [];
             if ($found) {
+                // Echte Größe und Anzahl der Nutzdateien merken (für den Abgleich mit der PreDB)
+                $data = array_filter($found, fn ($e) => !preg_match('/\.par2$/i', $e['name']));
+                if ($data) {
+                    $rel->real_size = array_sum(array_column($data, 'length'));
+                    $rel->real_files = count($data);
+                }
                 $real = Par2::releaseName($found);
                 if ($real) {
                     $rel->name = mb_substr($real, 0, 500);

@@ -32,4 +32,14 @@ class Format
             default => $t->format('d.m.Y'),
         };
     }
+
+    /** Datum/Uhrzeit in der Anzeige-Zeitzone (INDEXER_TIMEZONE, Standard Europe/Berlin). Gespeichert wird weiter in UTC. */
+    public static function dt(mixed $t, string $format = 'd.m.Y H:i'): string
+    {
+        if ($t === null || $t === '') {
+            return '';
+        }
+        $c = $t instanceof \DateTimeInterface ? \Illuminate\Support\Carbon::instance($t) : \Illuminate\Support\Carbon::parse((string) $t);
+        return $c->copy()->setTimezone(config('indexer.timezone', 'Europe/Berlin'))->format($format);
+    }
 }
