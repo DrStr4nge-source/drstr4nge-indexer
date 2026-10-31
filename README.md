@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version 1.10.1" src="https://img.shields.io/badge/version-1.10.1-f59e0b">
+  <img alt="Version 1.11.0" src="https://img.shields.io/badge/version-1.11.0-f59e0b">
   <img alt="PHP 8.5" src="https://img.shields.io/badge/PHP-8.5-777bb4">
   <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12%20%7C%2013-ff2d20">
   <img alt="Ubuntu 24.04" src="https://img.shields.io/badge/Ubuntu-24.04%20LTS-e95420">
@@ -31,6 +31,7 @@ Die Oberfläche ist auf Deutsch.
 - Erkennung passwortgeschützter RAR-Archive (RAR4 und RAR5)
 - Spam-Schutz: Blacklist für Poster und Namen (Regex), Spam-Wörter, nur ausführbare Dateien, zu kleine Releases
 - Automatisches Aufräumen: alte, unvollständige, verschleierte, passwortgeschützte und Spam-Releases
+- Pre-Daten aus IRC (#PreNNTmux, #nZEDbPRE), von predb.net und per RSS (predb.me): Pre-Zeit und Nukes direkt an den Releases
 - NZB-Export, optional Volltextsuche mit Manticore Search (sonst MySQL)
 
 **Für User**
@@ -48,7 +49,7 @@ Die Oberfläche ist auf Deutsch.
 **Für Admins**
 - Übersicht mit Server-Auslastung (CPU, RAM, Speicherplatz), User-Verwaltung (VIP, Sperren, Admin), Newsgroups (inkl. "Neu einlesen")
 - Releases prüfen mit Filtern, Suche und Mehrfachauswahl (freigeben, Spam, löschen, Poster sperren)
-- Blacklist, Zahlungen, Einladungscodes
+- PreDB mit Status und Einstellungen des IRC-Scrapers (Kanäle direkt im Admin änderbar), Blacklist, Zahlungen, Einladungscodes
 - Einstellungen: Name der Seite, eigenes Logo, Registrierungs-Modus
 - Verbindungstest zum Usenet-Provider mit verständlichen Fehlermeldungen
 
@@ -107,6 +108,8 @@ Die ausführliche Anleitung mit manueller Installation, allen Einstellungen, Upd
 | `TMDB_API_KEY`, `TMDB_LANGUAGE` | Cover und Filminfos | –, de-DE |
 | `PAYMENT_PROVIDER` | `nowpayments` oder `btcpay` | btcpay |
 | `NOWPAYMENTS_API_KEY`, `NOWPAYMENTS_IPN_SECRET`, `NOWPAYMENTS_PAY_CURRENCY` | NOWPayments, z.B. `xmr` für nur Monero | – |
+| `SCRAPE_IRC_USERNAME`, `SCRAPE_IRC_CHANNELS` | Pre-Daten aus IRC (Nick leer = aus) | – |
+| `PREDB_API_ENABLED` | Pre-Daten von predb.net | true |
 | `MANTICORE_ENABLED` | Volltextsuche mit Manticore | false |
 
 Alle Einträge mit Erklärung stehen in [`env.additions.txt`](env.additions.txt), VIP-Preise und Kategorien in

@@ -25,6 +25,12 @@
                     @endif
                     <td>
                         <div class="tm-relname">{{ $r->name }}</div>
+                        @if ($r->pre)
+                            <div class="tm-meta">
+                                <span class="tm-chip" title="Pre: {{ $r->pre->predate?->timezone(config('app.timezone'))->format('d.m.Y H:i') }}{{ $r->pre->source ? ' · ' . $r->pre->source : '' }}">Pre {{ \App\Support\Format::ago($r->pre->predate) }}</span>
+                                @if ($r->pre->isNuked())<span class="tm-chip bad" title="{{ $r->pre->nuke_reason }}">{{ $r->pre->nukeLabel() }}{{ $r->pre->nuke_reason ? ': ' . \Illuminate\Support\Str::limit($r->pre->nuke_reason, 40) : '' }}</span>@endif
+                            </div>
+                        @endif
                         @if ($showTitle && $r->media)
                             <div class="tm-meta">
                                 <a class="tm-link" href="{{ route('title', $r->media) }}">{{ $r->media->title }}</a>

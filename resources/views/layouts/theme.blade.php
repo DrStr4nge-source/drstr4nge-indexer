@@ -132,6 +132,7 @@ details.tm-menu[open] .tm-avatar, .tm-avatar:hover { border-color: var(--tm-acce
 .tm-meta { display: flex; align-items: center; gap: 7px; margin-top: 5px; font-size: 12px; color: var(--tm-muted); }
 .tm-chip { display: inline-block; padding: 1px 7px; border-radius: 5px; background: var(--tm-panel-2); border: 1px solid var(--tm-line); color: var(--tm-text); font-size: 11.5px; font-weight: 600; white-space: nowrap; }
 .tm-chip.accent { background: rgba(245, 158, 11, .14); border-color: rgba(245, 158, 11, .35); color: var(--tm-accent-2); }
+.tm-chip.bad { background: rgba(248, 113, 113, .12); border-color: rgba(248, 113, 113, .35); color: var(--tm-bad); }
 .tm-arrow { position: absolute; top: 38%; z-index: 5; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--tm-line-2); background: rgba(10, 13, 18, .85); color: var(--tm-text); cursor: pointer; }
 .tm-arrow:hover { border-color: var(--tm-accent); color: var(--tm-accent); }
 .tm-arrow.left { left: -12px; }

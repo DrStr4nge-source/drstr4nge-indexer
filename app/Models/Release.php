@@ -10,14 +10,24 @@ class Release extends Model
         'obfuscated' => 'boolean', 'inspected' => 'boolean', 'locked' => 'boolean', 'meta_checked' => 'boolean',
     ];
 
+    /** Pre-Daten immer mitladen (eine Abfrage pro Liste) */
+    protected $with = ['pre'];
+
     protected static function booted(): void
     {
+        // Neuer oder aufgelöster Name: passendes Pre suchen
+        static::saving(function (Release $r) {
+            if ($r->isDirty('name') && $r->name) {
+                $r->pre_id = Predb::where('title', $r->name)->value('id');
+            }
+        });
         static::saved(fn (Release $r) => \App\Services\Search\ReleaseIndex::sync($r));
         static::deleted(fn (Release $r) => \App\Services\Search\ReleaseIndex::remove([$r->id]));
     }
 
     public function newsgroup() { return $this->belongsTo(Newsgroup::class); }
     public function media() { return $this->belongsTo(Media::class); }
+    public function pre() { return $this->belongsTo(Predb::class, 'pre_id'); }
 
     /** Nur Releases, die User sehen dürfen: komplett, kein Spam, nicht passwortgeschützt, Name bekannt. */
     public function scopeVisible($q)

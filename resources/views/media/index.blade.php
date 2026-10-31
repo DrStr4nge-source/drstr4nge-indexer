@@ -77,6 +77,8 @@
                                     <span class="tm-chip">{{ \App\Support\Format::bytes($r->size) }}</span>
                                     <span class="tm-chip">{{ $r->posted_at?->format('d.m.Y H:i') }}</span>
                                     <span class="tm-chip">{{ $r->posted_at?->locale('de')->diffForHumans() }}</span>
+                                    @if ($r->pre)<span class="tm-chip accent" title="Pre: {{ $r->pre->predate?->timezone(config('app.timezone'))->format('d.m.Y H:i') }}">Pre {{ \App\Support\Format::ago($r->pre->predate) }}</span>@endif
+                                    @if ($r->pre?->isNuked())<span class="tm-chip bad" title="{{ $r->pre->nuke_reason }}">{{ $r->pre->nukeLabel() }}</span>@endif
                                 </div>
                                 <div class="tm-form-row" style="margin-top:10px;gap:8px">
                                     <a class="tm-btn tm-btn-primary tm-btn-sm" href="{{ route('download', $r->guid) }}">

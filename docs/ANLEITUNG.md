@@ -213,6 +213,67 @@ Optional: `year`, `overview`, `rating`, `poster_url` (volle URL), `imdb_id`, `tm
 Cover werden immer lokal als WebP gespeichert. Erlaubt eine Quelle das nicht (TVmaze will Verlinkung statt Kopien), dann `poster_url`
 weglassen oder die Cover-Speicherung in `FetchMetadata` für diese Quelle abschalten.
 
+## Pre-Daten (IRC und predb.net)
+Pre-Daten zeigen, wann ein Release in der Szene erschienen ist und ob es genuked wurde. Der Indexer verknüpft sie automatisch mit
+Releases gleichen Namens. In den Listen steht dann z.B. "Pre vor 3 Std", genukte Releases bekommen ein rotes Schild. Im Admin unter
+**PreDB** siehst du alle Einträge und ob der Scraper verbunden ist.
+
+Es gibt drei Quellen, alle sind einzeln abschaltbar:
+
+**1. IRC** (Kanäle `#PreNNTmux` und `#nZEDbPRE` auf synIRC, gleiche Einträge wie bei NNTmux). In der `.env`:
+
+    SCRAPE_IRC_SERVER=irc.synirc.net
+    SCRAPE_IRC_PORT=6697
+    SCRAPE_IRC_TLS=true
+    SCRAPE_IRC_USERNAME=EinEindeutigerNick
+    SCRAPE_IRC_REALNAME=Dein Name
+    SCRAPE_IRC_CHANNELS="#PreNNTmux,#nZEDbPRE"
+
+Einfacher geht es im Admin unter **PreDB > IRC-Einstellungen**: Server, Port, TLS, Nick, Kanäle und ein- oder ausschalten. Werte
+aus dem Admin haben Vorrang vor der `.env`, der Dienst übernimmt sie nach wenigen Sekunden ohne Neustart. "Auf .env zurücksetzen"
+löscht die Admin-Werte wieder. So kannst du tote Kanäle austauschen, ohne an den Server zu müssen.
+
+Wichtig in der `.env`: Kanäle in Anführungszeichen, sonst gilt `#` als Kommentar. Der Nick muss eindeutig sein und normal aussehen, sonst droht ein
+Bann im Kanal. Der Scraper läuft als Dienst `drstr4nge-pre` dauerhaft im Hintergrund und verbindet sich nach Abbrüchen selbst neu.
+Nach einer Änderung an der `.env`:
+
+    php artisan config:clear
+    systemctl restart drstr4nge-pre
+    journalctl -u drstr4nge-pre -f          # Ausgabe live ansehen (Strg+C beendet nur die Anzeige)
+
+Zum Testen ohne Dienst, mit jeder Kanalzeile: `sudo -u www-data php artisan indexer:pre-irc --debug`
+
+**2. predb.net** (API, kein Konto nötig). Läuft alle 5 Minuten über den Zeitplan und holt die neuesten Einträge. Zusätzlich schlägt
+er pro Lauf bis zu `PREDB_API_LOOKUP` (Standard 20) neue Releases ohne Pre einzeln nach. Abschalten mit `PREDB_API_ENABLED=false`.
+Von Hand: `sudo -u www-data php artisan indexer:pre-fetch`
+
+**3. RSS-Feeds**, Standard `https://predb.me/?rss=1`. Laufen mit `indexer:pre-fetch` alle 5 Minuten mit. Weitere Feeds mit Komma in
+`PRE_RSS_FEEDS` eintragen, leer lassen schaltet RSS ab. RSS liefert nur Name, Zeit und Kategorie, keine Größe und keine Nukes.
+
+Vorhandene Releases nachträglich verknüpfen (z.B. nach dem ersten Tag): `sudo -u www-data php artisan indexer:pre-match`
+
+**Bestehende Installation nachrüsten** (Erstinstallation mit `install.sh` macht das selbst):
+
+    cd /var/www/indexer && php artisan migrate --force
+    echo "\Illuminate\Support\Facades\Schedule::command('indexer:pre-fetch')->everyFiveMinutes()->withoutOverlapping();" >> routes/console.php
+    cat > /etc/systemd/system/drstr4nge-pre.service <<'UNIT'
+    [Unit]
+    Description=DrStr4nge Indexer: Pre-Daten aus IRC
+    After=network-online.target mariadb.service
+    Wants=network-online.target
+
+    [Service]
+    User=www-data
+    WorkingDirectory=/var/www/indexer
+    ExecStart=/usr/bin/php /var/www/indexer/artisan indexer:pre-irc
+    Restart=on-failure
+    RestartSec=60
+
+    [Install]
+    WantedBy=multi-user.target
+    UNIT
+    systemctl daemon-reload && systemctl enable --now drstr4nge-pre
+
 ## Krypto-Zahlung mit NOWPayments (ohne eigenen Server, z.B. Monero)
 1. Konto bei nowpayments.io anlegen, unter Einstellungen die Auszahlungs-Wallet(s) eintragen (z.B. deine Monero-Adresse).
 2. Im NOWPayments-Dashboard einen API-Key und ein IPN-Secret erzeugen.

@@ -29,6 +29,7 @@ PHP_VERSION="8.5"
 NGINX_SITE="${NGINX_SITE:-/etc/nginx/sites-available/usenet-indexer}"
 NGINX_ENABLED_DIR="${NGINX_ENABLED_DIR:-/etc/nginx/sites-enabled}"
 CRON_FILE="${CRON_FILE:-/etc/cron.d/usenet-indexer}"
+PRE_SERVICE="${PRE_SERVICE:-/etc/systemd/system/drstr4nge-pre.service}"
 LOG_FILE="${LOG_FILE:-/var/log/usenet-indexer-install.log}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -129,7 +130,11 @@ require_php_in_composer() {
 # Zeitplan in routes/console.php ergänzen (nur einmal)
 add_schedule() {
     local file=$1 manticore=$2
-    grep -q 'indexer:crawl' "$file" && return 0
+    # Neuere Einträge auch bei bestehendem Zeitplan ergänzen
+    if grep -q 'indexer:crawl' "$file"; then
+        grep -q 'indexer:pre-fetch' "$file" || echo "\\Illuminate\\Support\\Facades\\Schedule::command('indexer:pre-fetch')->everyFiveMinutes()->withoutOverlapping();" >> "$file"
+        return 0
+    fi
     {
         echo ''
         echo '// --- DrStr4nge Indexer ---'
@@ -137,6 +142,7 @@ add_schedule() {
         echo "\\Illuminate\\Support\\Facades\\Schedule::command('indexer:inspect')->everyFifteenMinutes()->withoutOverlapping();"
         echo "\\Illuminate\\Support\\Facades\\Schedule::command('indexer:metadata')->everyThirtyMinutes()->withoutOverlapping();"
         echo "\\Illuminate\\Support\\Facades\\Schedule::command('indexer:cleanup')->dailyAt('04:00');"
+        echo "\\Illuminate\\Support\\Facades\\Schedule::command('indexer:pre-fetch')->everyFiveMinutes()->withoutOverlapping();"
         if is_yes "$manticore"; then
             echo "\\Illuminate\\Support\\Facades\\Schedule::command('indexer:search-index')->weeklyOn(1, '05:00');"
         fi
@@ -194,6 +200,28 @@ write_cron() {
     local target=$1
     printf '# DrStr4nge Indexer: Laravel-Zeitplan jede Minute\nSHELL=/bin/bash\n* * * * * %s cd %s && php artisan schedule:run >> /dev/null 2>&1\n' \
         "$WEB_USER" "$APP_DIR" > "$target"
+    chmod 644 "$target"
+}
+
+# Dienst für den IRC-Pre-Scraper (läuft dauerhaft, startet bei Absturz neu)
+write_pre_service() {
+    local target=$1
+    cat > "$target" <<UNIT
+[Unit]
+Description=DrStr4nge Indexer: Pre-Daten aus IRC
+After=network-online.target mariadb.service
+Wants=network-online.target
+
+[Service]
+User=${WEB_USER}
+WorkingDirectory=${APP_DIR}
+ExecStart=/usr/bin/php ${APP_DIR}/artisan indexer:pre-irc
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
+UNIT
     chmod 644 "$target"
 }
 
@@ -439,6 +467,8 @@ finish_app() {
     chown -R "$WEB_USER:$WEB_USER" "$APP_DIR"
     chmod -R ug+rwX "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
     write_cron "$CRON_FILE"
+    write_pre_service "$PRE_SERVICE"
+    systemctl daemon-reload && systemctl enable --now drstr4nge-pre || warn "Pre-Dienst nicht gestartet. Später: systemctl enable --now drstr4nge-pre"
     systemctl reload "php${PHP_VERSION}-fpm" || true
     ok "Fertig eingerichtet"
 }

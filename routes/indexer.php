@@ -41,6 +41,10 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', EnsureAdmin::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('index');
     Route::get('/system', [AdminController::class, 'system'])->name('system');
+    Route::get('/predb', [\App\Http\Controllers\Admin\PreController::class, 'index'])->name('predb');
+    Route::post('/predb/irc', [\App\Http\Controllers\Admin\PreController::class, 'updateIrc'])->name('predb.irc');
+    Route::post('/predb/irc/reconnect', [\App\Http\Controllers\Admin\PreController::class, 'reconnect'])->name('predb.reconnect');
+    Route::post('/predb/irc/reset', [\App\Http\Controllers\Admin\PreController::class, 'resetIrc'])->name('predb.reset');
     Route::get('/users', [AdminController::class, 'users'])->name('users');
     Route::post('/users/{user}', [AdminController::class, 'updateUser'])->name('users.update');
     Route::get('/groups', [AdminController::class, 'groups'])->name('groups');

@@ -1,6 +1,6 @@
 <?php
 return [
-    'version' => '1.10.1',
+    'version' => '1.11.0',
     'nntp' => [
         'host' => env('NNTP_HOST'),
         'port' => (int) env('NNTP_PORT', 563),
@@ -11,6 +11,35 @@ return [
     ],
     'backfill'           => (int) env('INDEXER_BACKFILL', 100000), // Artikel beim ersten Crawl (wenn backfill_days = 0)
     'backfill_days'      => (int) env('INDEXER_BACKFILL_DAYS', 0),    // erster Crawl: so viele Tage zurück, 0 = INDEXER_BACKFILL nutzen
+
+    // Pre-Daten aus IRC (indexer:pre-irc, Dienst drstr4nge-pre). Gleiche Namen wie bei NNTmux.
+    'pre_irc' => [
+        'server' => env('SCRAPE_IRC_SERVER', 'irc.synirc.net'),
+        'port' => (int) env('SCRAPE_IRC_PORT', 6697),
+        'tls' => (bool) env('SCRAPE_IRC_TLS', true),
+        'tls_verify' => (bool) env('SCRAPE_IRC_TLS_VERIFY', true),
+        'nick' => env('SCRAPE_IRC_USERNAME', ''),
+        'username' => env('SCRAPE_IRC_USERNAME', ''),
+        'realname' => env('SCRAPE_IRC_REALNAME', env('SCRAPE_IRC_USERNAME', '')),
+        'password' => env('SCRAPE_IRC_PASSWORD'),
+        // ohne Anführungszeichen wäre "#..." in der .env ein Kommentar: dann Standard; "#" wird ergänzt, falls es fehlt
+        'channels' => array_values(array_map(fn ($c) => $c[0] === '#' ? $c : '#' . $c,
+            array_filter(array_map('trim', explode(',', (string) (env('SCRAPE_IRC_CHANNELS') ?: '#PreNNTmux,#nZEDbPRE')))))),
+        'category_ignore' => env('SCRAPE_IRC_CATEGORY_IGNORE', ''),
+        'title_ignore' => env('SCRAPE_IRC_TITLE_IGNORE', ''),
+    ],
+
+    // Pre-Daten von predb.net (indexer:pre-fetch, alle 5 Minuten)
+    'predb_api' => [
+        'enabled' => (bool) env('PREDB_API_ENABLED', true),
+        'url' => env('PREDB_API_URL', 'https://api.predb.net'),
+        'pages' => (int) env('PREDB_API_PAGES', 5),      // höchstens so viele Seiten à 100 pro Lauf
+        'lookup' => (int) env('PREDB_API_LOOKUP', 20),   // Releases ohne Pre pro Lauf einzeln nachschlagen
+        'pause_ms' => (int) env('PREDB_API_PAUSE_MS', 1500),
+    ],
+
+    // Pre-Daten aus RSS-Feeds (mit indexer:pre-fetch, alle 5 Minuten), mehrere mit Komma trennen, leer = aus
+    'pre_rss' => array_values(array_filter(array_map('trim', explode(',', (string) env('PRE_RSS_FEEDS', 'https://predb.me/?rss=1'))))),
     'min_completion'     => (int) env('INDEXER_MIN_COMPLETION', 90), // % Teile, ab denen ein Release sichtbar ist
     'free_grabs_per_day' => (int) env('INDEXER_FREE_GRABS', 5),     // VIP = unbegrenzt
     'retention_days'     => (int) env('INDEXER_RETENTION_DAYS', 1000), // ältere Releases werden gelöscht

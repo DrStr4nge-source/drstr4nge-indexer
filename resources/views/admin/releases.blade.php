@@ -60,7 +60,7 @@
                         @forelse ($releases as $r)
                             <tr>
                                 <td><input type="checkbox" name="ids[]" value="{{ $r->id }}" class="tm-check"></td>
-                                <td><div class="tm-relname">{{ $r->name }}</div><div class="tm-meta">{{ $r->completion }}% · {{ \App\Support\Format::bytes($r->size) }} · {{ $r->newsgroup?->name }}</div></td>
+                                <td><div class="tm-relname">{{ $r->name }}</div><div class="tm-meta">{{ $r->completion }}% · {{ \App\Support\Format::bytes($r->size) }} · {{ $r->newsgroup?->name }}@if ($r->pre) · Pre {{ \App\Support\Format::ago($r->pre->predate) }}@endif @if ($r->pre?->isNuked())<span class="tm-chip bad">{{ $r->pre->nukeLabel() }}</span>@endif</div></td>
                                 <td class="tm-hide-sm nowrap"><span class="tm-chip">{{ \App\Services\Categories::name($r->category_id) }}</span></td>
                                 <td class="nowrap">{{ $r->status }}@if ($r->obfuscated) · verschleiert @endif @if ($r->locked) <span class="tm-muted">(manuell)</span> @endif</td>
                                 <td class="tm-hide-sm tm-relname tm-muted">{{ $r->poster }}</td>

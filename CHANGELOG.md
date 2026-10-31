@@ -2,6 +2,16 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.11.0] – 2026-10-31
+
+### Neu
+- Pre-Daten: IRC-Scraper für `#PreNNTmux` und `#nZEDbPRE` (synIRC) als Dienst `drstr4nge-pre`, verbindet sich selbst neu
+- Pre-Daten von predb.net, alle 5 Minuten, dazu Nachschlagen von Releases ohne Pre
+- Pre-Daten aus RSS-Feeds (`PRE_RSS_FEEDS`, Standard predb.me)
+- IRC-Einstellungen im Admin (Server, Port, TLS, Nick, Kanäle, an/aus), der Dienst verbindet ohne Neustart neu
+- Releases zeigen "Pre vor X" und Nukes, Admin-Seite **PreDB** mit Suche und Scraper-Status
+- Befehle `indexer:pre-irc`, `indexer:pre-fetch`, `indexer:pre-match`
+
 ## [1.10.1] – 2026-10-31
 
 ### Behoben
