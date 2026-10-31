@@ -232,7 +232,14 @@ details.tm-menu[open] .tm-avatar, .tm-avatar:hover { border-color: var(--tm-acce
 .tm-body .underline { text-decoration-color: var(--tm-dim); }
 .tm-body .max-w-7xl { max-width: 1100px; }
 .tm-body .p-4.sm\:p-8 { border: 1px solid var(--tm-line); border-radius: var(--tm-radius); }
-.tm-body input[type=checkbox] { accent-color: var(--tm-accent); width: 16px; height: 16px; background: var(--tm-bg); border-color: var(--tm-line-2); }
+.tm-body input[type=checkbox] { -webkit-appearance: none; appearance: none; flex: 0 0 auto; margin: 0; width: 16px; height: 16px; border: 1px solid var(--tm-line-2); border-radius: 4px; background-color: var(--tm-bg); background-image: none; color: var(--tm-accent); cursor: pointer; vertical-align: middle; }
+.tm-body input[type=checkbox]:hover { border-color: var(--tm-accent); }
+.tm-body input[type=checkbox]:focus { outline: none; box-shadow: none; }
+.tm-body input[type=checkbox]:focus-visible { outline: 2px solid rgba(245, 158, 11, .5); outline-offset: 2px; }
+.tm-body input[type=checkbox]:checked { background-color: var(--tm-accent); border-color: var(--tm-accent); background-repeat: no-repeat; background-position: center; background-size: 12px 12px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='%231a1203' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+.tm-body input[type=checkbox]:indeterminate { background-color: var(--tm-accent); border-color: var(--tm-accent); background-repeat: no-repeat; background-position: center; background-size: 10px 2px;
+    background-image: linear-gradient(var(--tm-accent-ink), var(--tm-accent-ink)); }
 .tm-body .fixed.inset-0 .bg-gray-500 { background: rgba(0, 0, 0, .7) !important; }
 
 /* ---- Handy und Tablet ---- */

@@ -2,6 +2,11 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.11.1] – 2026-10-31
+
+### Behoben
+- Häkchen in Kästchen (Einstellungen, Mehrfachauswahl, Login) waren im dunklen Design unsichtbar
+
 ## [1.11.0] – 2026-10-31
 
 ### Neu
