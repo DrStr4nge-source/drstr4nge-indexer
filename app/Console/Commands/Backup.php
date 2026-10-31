@@ -119,7 +119,8 @@ class Backup extends Command
 
     private function runShell(string $cmd, int $timeout = 600, bool $check = true): void
     {
-        $p = Process::fromShellCommandline('set -o pipefail; ' . $cmd);
+        // Ausdrücklich bash: /bin/sh ist auf Ubuntu dash und kennt pipefail nicht
+        $p = new Process(['bash', '-c', 'set -o pipefail; ' . $cmd]);
         $p->setTimeout($timeout);
         $p->run();
         if ($check && !$p->isSuccessful()) {

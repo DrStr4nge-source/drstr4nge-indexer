@@ -2,6 +2,11 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.12.1] – 2026-10-31
+
+### Behoben
+- Sicherung brach mit "set: Illegal option -o pipefail" ab (Ubuntu nutzt für sh dash statt bash)
+
 ## [1.12.0] – 2026-10-31
 
 ### Neu
