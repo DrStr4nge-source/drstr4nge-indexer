@@ -281,7 +281,7 @@ Jede Nacht um 03:30 Uhr (`BACKUP_TIME`) sichert `indexer:backup` die Datenbank (
 **Google Drive:** Admin > Zugangsdaten > Sicherung > Google Drive > Verbinden. Dafür auf deinem PC rclone herunterladen
 (https://rclone.org/downloads/), dort `rclone authorize "drive"` ausführen, bei Google anmelden und den angezeigten Text in das Feld
 einfügen. Ab dann landet jede Sicherung zusätzlich im gewählten Drive-Ordner. Dort werden alte Sicherungen ebenfalls nach
-`BACKUP_KEEP_DAYS` gelöscht. Alternativ auf dem Server: `sudo bash setup-gdrive.sh`. Andere Ziele (Dropbox, OneDrive, S3) gehen
+`BACKUP_KEEP_DAYS` gelöscht, endgültig und ohne Umweg über den Papierkorb. Andere Dateien im Ordner bleiben unberührt. Alternativ auf dem Server: `sudo bash setup-gdrive.sh`. Andere Ziele (Dropbox, OneDrive, S3) gehen
 mit rclone genauso (`BACKUP_RCLONE_REMOTE`). Ein zweiter Server per SSH: `BACKUP_REMOTE=backup@server2:/srv/backups/`.
 
 **Wiederherstellen:**

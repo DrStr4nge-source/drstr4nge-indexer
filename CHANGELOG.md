@@ -2,6 +2,11 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.12.2] – 2026-10-31
+
+### Geändert
+- Alte Sicherungen werden in Google Drive endgültig gelöscht statt in den Papierkorb verschoben (der belegt sonst noch 30 Tage Speicherplatz)
+
 ## [1.12.1] – 2026-10-31
 
 ### Behoben

@@ -101,7 +101,8 @@ class Backup extends Command
                 $this->runShell(sprintf('%s copy %s %s', $rc, escapeshellarg($target), escapeshellarg($c['rclone_remote'])), 7200);
                 $this->info('In die Cloud kopiert: ' . $c['rclone_remote']);
                 // Dort ebenfalls nur die letzten BACKUP_KEEP_DAYS Tage behalten
-                $this->runShell(sprintf('%s delete %s --min-age %dd --include %s', $rc, escapeshellarg($c['rclone_remote']),
+                // --drive-use-trash=false: endgültig löschen, sonst belegt der Drive-Papierkorb noch 30 Tage Platz (bei anderen Zielen ohne Wirkung)
+                $this->runShell(sprintf('%s delete %s --min-age %dd --include %s --drive-use-trash=false', $rc, escapeshellarg($c['rclone_remote']),
                     max(1, (int) $c['keep_days']), escapeshellarg('drstr4nge-backup-*.tar')), 600, false);
             } catch (\Throwable $e) {
                 $msg = 'Kopie in die Cloud fehlgeschlagen: ' . $e->getMessage();
