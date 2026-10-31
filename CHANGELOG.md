@@ -2,6 +2,11 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.13.0] – 2026-10-31
+
+### Neu
+- `indexer:pre-import`: PreDB-Dumps einspielen, mit `--nzedb` alle Tages-Dumps von github.com/nZEDb/nZEDbPre_Dumps (2014 bis Juni 2024), `--since` für ein Startdatum; auch eigene Dateien (nZEDb-Format oder CSV), Ordner und URLs. Vorhandene Einträge bleiben, danach werden Releases verknüpft.
+
 ## [1.12.2] – 2026-10-31
 
 ### Geändert

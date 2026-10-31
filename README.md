@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version 1.12.2" src="https://img.shields.io/badge/version-1.12.2-f59e0b">
+  <img alt="Version 1.13.0" src="https://img.shields.io/badge/version-1.13.0-f59e0b">
   <img alt="PHP 8.5" src="https://img.shields.io/badge/PHP-8.5-777bb4">
   <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12%20%7C%2013-ff2d20">
   <img alt="Ubuntu 24.04" src="https://img.shields.io/badge/Ubuntu-24.04%20LTS-e95420">
@@ -33,7 +33,7 @@ Die Oberfläche ist auf Deutsch.
 - Automatisches Aufräumen: alte, unvollständige, verschleierte, passwortgeschützte und Spam-Releases
 - Verschleierte Releases werden über PAR2 und zusätzlich über die PreDB (Größe, Dateianzahl, Zeit) benannt
 - Serien-IDs (TVDB, TVmaze) über TVmaze für zuverlässigere Treffer in Sonarr
-- Pre-Daten aus IRC (#PreNNTmux, #nZEDbPRE), von predb.net und per RSS (predb.me): Pre-Zeit und Nukes direkt an den Releases
+- Pre-Daten aus IRC (#PreNNTmux, #nZEDbPRE), von predb.net, per RSS (predb.me) und aus alten nZEDb-Dumps: Pre-Zeit und Nukes direkt an den Releases
 - NZB-Export, optional Volltextsuche mit Manticore Search (sonst MySQL)
 
 **Für User**

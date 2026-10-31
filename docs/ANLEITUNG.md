@@ -243,6 +243,19 @@ Von Hand: `sudo -u www-data php artisan indexer:pre-fetch`
 **3. RSS-Feeds**, Standard `https://predb.me/?rss=1`. Laufen mit `indexer:pre-fetch` alle 5 Minuten mit. Weitere Feeds mit Komma in
 `PRE_RSS_FEEDS` eintragen, leer lassen schaltet RSS ab. RSS liefert nur Name, Zeit und Kategorie, keine Größe und keine Nukes.
 
+**4. Alte PreDB-Dumps einspielen** (einmalig). Die Tages-Dumps von nZEDb ([github.com/nZEDb/nZEDbPre_Dumps](https://github.com/nZEDb/nZEDbPre_Dumps),
+2014 bis Juni 2024, auch deutsche P2P-Releases von xrel) lädt der Indexer selbst:
+
+    cd /var/www/indexer
+    sudo -u www-data php artisan indexer:pre-import --nzedb --since=2023-01-01
+
+Alle Dumps sind etwa 7 Millionen Einträge und belegen grob 2 GB in der Datenbank, die Sicherung wird entsprechend größer.
+Mit `--since` holst du nur Pres ab einem Datum. Ohne Grund lohnt der ganze Bestand selten, weil nur Releases verknüpft werden,
+die auch in deinen Gruppen auftauchen. Vorhandene Einträge bleiben unverändert, mehrfaches Einspielen schadet nicht. Danach
+werden die Releases automatisch verknüpft. Bei großen Mengen am besten in `screen` oder mit `nohup ... &` starten.
+Eigene Dateien gehen auch: `indexer:pre-import /pfad/datei.csv.gz` (nZEDb-Format oder CSV mit Kopfzeile, Spalten z.B.
+`title;predate;size;files;category`), ein Ordner mit Dumps oder eine URL.
+
 Vorhandene Releases nachträglich verknüpfen (z.B. nach dem ersten Tag): `sudo -u www-data php artisan indexer:pre-match`
 
 **Von Hand nachrüsten** (nur nötig ohne `update.sh`; `install.sh` und `update.sh` machen das selbst):
@@ -378,7 +391,7 @@ Handy und Codes verloren: `php artisan indexer:2fa-reset deine@adresse`.
   - Zwei-Faktor-Anmeldung
 - **Befehle:** `indexer:crawl`, `indexer:status`, `indexer:inspect`, `indexer:metadata`, `indexer:tvmaze`, `indexer:cleanup`, `indexer:recategorize`,
   `indexer:search-index`, `indexer:test-nntp`, `indexer:backup`, `indexer:health`, `indexer:pre-irc`, `indexer:pre-fetch`, `indexer:pre-match`,
-  `indexer:pre-deobfuscate`, `indexer:2fa-reset`, `indexer:make-admin mail@beispiel.de --create`.
+  `indexer:pre-deobfuscate`, `indexer:pre-import`, `indexer:2fa-reset`, `indexer:make-admin mail@beispiel.de --create`.
 - **Zeit:** gespeichert wird in UTC, angezeigt und geplant in deutscher Zeit (`INDEXER_TIMEZONE=Europe/Berlin`).
 - **Zeitplan:** steht in `routes/indexer-schedule.php` und kommt mit jedem Update mit.
 - **Tests:** `php artisan test` (Unit- und Feature-Tests).
