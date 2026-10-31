@@ -120,6 +120,8 @@ class TestNntp extends Command
             $code === 400 => 'Hinweis: Der Server ist gerade nicht verfügbar oder es sind zu viele Verbindungen offen. Später erneut versuchen.',
             $code === 411 => 'Hinweis: Diese Gruppe gibt es bei deinem Provider nicht. Namen prüfen oder eine andere Gruppe testen: php artisan indexer:test-nntp alt.binaries.xyz',
             $code === 420, $code === 423 => 'Hinweis: In diesem Bereich gibt es keine Artikel. Die Verbindung selbst funktioniert.',
+            str_contains($m, 'antwortet nicht mehr') => 'Hinweis: Der Server hat nicht geantwortet. Oft passt SSL nicht zum Port (Port 563 braucht NNTP_SSL=true).',
+            str_contains($m, 'getrennt') => 'Hinweis: Der Server hat die Verbindung getrennt. Häufige Gründe: zu viele gleichzeitige Verbindungen (NNTP_CONNECTIONS senken) oder SSL passt nicht zum Port.',
             $code === null && str_contains($m, 'antwort:') => 'Hinweis: Der Server hat nicht geantwortet. Oft passt SSL nicht zum Port (Port 563 braucht NNTP_SSL=true).',
             default => 'Hinweis: Unbekannter Fehler. Die Meldung oben an den Provider-Support oder hier im Chat schicken.',
         };

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 use App\Models\Newsgroup;
 use App\Services\Backfill;
 use App\Services\Nntp;
+use App\Services\NntpConnectionLost;
 use App\Services\ReleaseBuilder;
 use App\Support\ProcessPool;
 use Illuminate\Console\Command;
@@ -68,14 +69,16 @@ class CrawlGroups extends Command
         if ($days <= 0) {
             return $byCount;
         }
-        $probe = function (int $n) use ($nntp, $high): ?array {
+        $probe = function (int $n) use ($nntp, $name, $high): ?array {
             try {
-                foreach ($nntp->xover($n, min($n + 200, $high)) as $row) {
+                foreach ($this->retry($nntp, $name, fn () => $nntp->xover($n, min($n + 200, $high))) as $row) {
                     $ts = isset($row[3]) ? strtotime((string) $row[3]) : false;
                     if ($ts) {
                         return [(int) $row[0], $ts];
                     }
                 }
+            } catch (NntpConnectionLost $e) {
+                throw $e; // Server dauerhaft weg: nicht als "keine Artikel" werten, sonst würde ab Gruppenanfang gelesen
             } catch (\RuntimeException $e) {
                 // z.B. "keine Artikel in diesem Bereich"
             }
@@ -100,7 +103,7 @@ class CrawlGroups extends Command
 
         foreach ($groups as $g) {
             try {
-                [$low, $high] = $nntp->group($g->name);
+                [$low, $high] = $this->retry($nntp, null, fn () => $nntp->group($g->name));
                 $start = $g->last_article > 0
                     ? max($g->last_article + 1, $low)
                     : $this->firstStart($nntp, $g->name, $low, $high);
@@ -109,7 +112,8 @@ class CrawlGroups extends Command
                 }
                 while ($start <= $high) {
                     $end = min($start + $batch - 1, $high);
-                    $n = $builder->ingest($g, $nntp->xover($start, $end));
+                    $rows = $this->retry($nntp, $g->name, fn () => $nntp->xover($start, $end));
+                    $n = $builder->ingest($g, $rows);
                     $g->update(['last_article' => $end]);
                     $this->info("{$g->name}: $start-$end ($n Releases aktualisiert)");
                     $start = $end + 1;
@@ -123,4 +127,38 @@ class CrawlGroups extends Command
         $nntp->close();
         return $ok ? self::SUCCESS : self::FAILURE;
     }
+
+    /**
+     * Führt einen NNTP-Befehl aus. Trennt der Server die Verbindung, wird neu verbunden,
+     * die Gruppe neu gewählt und der Befehl wiederholt (bis zu 3 Mal, mit wachsender Pause).
+     */
+    private function retry(Nntp $nntp, ?string $group, callable $fn): mixed
+    {
+        for ($try = 1; ; $try++) {
+            try {
+                return $fn();
+            } catch (NntpConnectionLost $e) {
+                if ($try > 3) {
+                    throw $e;
+                }
+                $wait = $try * self::$retryPause;
+                $this->line(sprintf('%s: %s, verbinde neu in %d s (Versuch %d von 3)', $group ?? 'Server', $e->getMessage(), $wait, $try));
+                $nntp->close();
+                if ($wait > 0) {
+                    sleep($wait);
+                }
+                try {
+                    $nntp->connect();
+                    if ($group !== null) {
+                        $nntp->group($group);
+                    }
+                } catch (\RuntimeException $e2) {
+                    $this->line(($group ?? 'Server') . ': Neuverbinden fehlgeschlagen: ' . $e2->getMessage());
+                }
+            }
+        }
+    }
+
+    /** Sekunden Pause vor dem 1. Neuverbinden (2. Versuch doppelt, 3. dreifach). In Tests 0. */
+    public static int $retryPause = 5;
 }

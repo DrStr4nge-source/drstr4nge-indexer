@@ -22,7 +22,7 @@ class Nntp
             throw new \RuntimeException("NNTP-Verbindung fehlgeschlagen: $errstr");
         }
         stream_set_timeout($this->sock, $timeout); // kurz warten, solange Begrüßung/Login laufen
-        $this->expect(fgets($this->sock), [200, 201]);
+        $this->expect($this->readLine(), [200, 201]);
 
         if ($c['user']) {
             $r = $this->cmd('AUTHINFO USER ' . $c['user']);
@@ -48,8 +48,9 @@ class Nntp
     {
         $this->expect($this->cmd("XOVER $from-$to"), [224]);
         $rows = [];
-        while (($line = fgets($this->sock)) !== false) {
-            $line = rtrim($line, "\r\n");
+        while (true) {
+            // Bricht die Verbindung mitten in der Liste ab, wirft readLine(). So wird nie ein halber Block gespeichert.
+            $line = rtrim($this->readLine(), "\r\n");
             if ($line === '.') {
                 break;
             }
@@ -71,7 +72,8 @@ class Nntp
         }
         $this->expect($r, [222]);
         $lines = [];
-        while (($line = fgets($this->sock)) !== false) {
+        while (true) {
+            $line = $this->readLine();
             if (rtrim($line, "\r\n") === '.') {
                 break;
             }
@@ -88,13 +90,29 @@ class Nntp
         if ($this->sock) {
             @fwrite($this->sock, "QUIT\r\n");
             @fclose($this->sock);
+            $this->sock = null;
         }
     }
 
     private function cmd(string $line): string
     {
-        fwrite($this->sock, $line . "\r\n");
-        return (string) fgets($this->sock);
+        if (!$this->sock || @fwrite($this->sock, $line . "\r\n") === false) {
+            throw new NntpConnectionLost('Verbindung zum Usenet-Server getrennt (beim Senden)');
+        }
+        return $this->readLine();
+    }
+
+    /** Eine Zeile lesen. Getrennte Verbindung oder Zeitüberschreitung => NntpConnectionLost statt PHP-Warnung. */
+    private function readLine(): string
+    {
+        $line = $this->sock ? @fgets($this->sock) : false;
+        if ($line === false) {
+            $meta = $this->sock ? @stream_get_meta_data($this->sock) : [];
+            throw new NntpConnectionLost(!empty($meta['timed_out'])
+                ? 'Usenet-Server antwortet nicht mehr (Zeitüberschreitung)'
+                : 'Verbindung vom Usenet-Server getrennt');
+        }
+        return $line;
     }
 
     private function code(string $resp): int

@@ -2,6 +2,12 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.10.1] – 2026-10-31
+
+### Behoben
+- Trennt der Usenet-Server die Verbindung mitten im Abruf, verbindet der Crawler neu und holt den Block noch einmal (bis zu 3 Versuche). Vorher brach der ganze Crawl mit "Connection reset by peer" ab.
+- Ein abgebrochener Header-Abruf wird nicht mehr halb gespeichert. Vorher konnten dabei Artikel übersprungen werden.
+
 ## [1.10.0] – 2026-10-31
 
 ### Neu

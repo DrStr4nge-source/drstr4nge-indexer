@@ -1,6 +1,6 @@
 <?php
 return [
-    'version' => '1.10.0',
+    'version' => '1.10.1',
     'nntp' => [
         'host' => env('NNTP_HOST'),
         'port' => (int) env('NNTP_PORT', 563),
