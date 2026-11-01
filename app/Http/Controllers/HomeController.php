@@ -14,7 +14,7 @@ class HomeController extends Controller
             'user' => $request->user(),
             'movies' => $this->latest('movie'),
             'shows' => $this->latest('tv'),
-            'releases' => Release::visible()->with('media')->orderByDesc('posted_at')->limit(15)->get(),
+            'releases' => Release::lite()->visible()->with('media')->orderByDesc('posted_at')->limit(15)->get(),
             'hasMedia' => Media::query()->exists(),
         ]);
     }

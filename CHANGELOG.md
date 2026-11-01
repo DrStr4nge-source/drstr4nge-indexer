@@ -2,6 +2,12 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.13.1] – 2026-11-01
+
+### Behoben
+- "Allowed memory size exhausted" auf Listen-Seiten bei großen Releases: Admin-Releases, Suche, Startseite, Titelseite, Merkliste, RSS und Mehrfachaktionen laden die Artikel-Liste der Releases nicht mehr mit (vorher bis zu 100 MB für 50 Releases, jetzt etwa 2 MB)
+- "Poster sperren" für alle Treffer liest nur noch die ersten 500 Poster aus der Datenbank
+
 ## [1.13.0] – 2026-10-31
 
 ### Neu

@@ -37,6 +37,17 @@ class Release extends Model
             ->where('obfuscated', false);
     }
 
+    /**
+     * Alle Spalten außer "files" (Artikel-Liste, bei großen Releases mehrere MB). Für Listen und Suche,
+     * die nur anzeigen. Gespeichert werden kann so ein Release trotzdem (nur geänderte Felder).
+     */
+    public function scopeLite($q)
+    {
+        static $cols = null;
+        $cols ??= array_values(array_diff(\Illuminate\Support\Facades\Schema::getColumnListing($this->getTable()), ['files']));
+        return $q->select(array_map(fn ($c) => $this->getTable() . '.' . $c, $cols));
+    }
+
     public function scopeCategory($q, array $ids)
     {
         return $ids ? $q->whereIn('category_id', $ids) : $q;

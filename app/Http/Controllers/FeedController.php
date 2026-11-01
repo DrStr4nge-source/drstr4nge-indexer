@@ -23,7 +23,7 @@ class FeedController extends Controller
             return response('Falscher oder fehlender API-Key', 401)->header('Content-Type', 'text/plain; charset=UTF-8');
         }
         $watch = $request->query('t') === 'merkliste';
-        $q = Release::visible()->with('media')->orderByDesc('posted_at')->limit(min(100, max(1, (int) $request->query('limit', 50))));
+        $q = Release::lite()->visible()->with('media')->orderByDesc('posted_at')->limit(min(100, max(1, (int) $request->query('limit', 50))));
         if ($watch) {
             $q->whereIn('media_id', Watch::where('user_id', $user->id)->select('media_id'));
         }

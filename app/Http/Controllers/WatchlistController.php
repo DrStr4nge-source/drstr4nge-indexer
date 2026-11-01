@@ -12,7 +12,7 @@ class WatchlistController extends Controller
     {
         $user = $request->user();
         $items = Watch::where('user_id', $user->id)->with('media')->latest()->get()->filter(fn ($w) => $w->media);
-        $releases = Release::visible()->whereIn('media_id', $items->pluck('media_id'))->with('media')->orderByDesc('posted_at')->paginate(50);
+        $releases = Release::lite()->visible()->whereIn('media_id', $items->pluck('media_id'))->with('media')->orderByDesc('posted_at')->paginate(50);
         return view('watchlist', compact('items', 'releases', 'user'));
     }
 

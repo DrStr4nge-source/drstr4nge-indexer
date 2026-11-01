@@ -128,7 +128,7 @@ class AdminController extends Controller
         $filter = (string) $request->query('status', 'flagged');
         $search = (string) $request->query('q', '');
         $perPage = in_array((int) $request->query('per_page'), [50, 100, 250], true) ? (int) $request->query('per_page') : 50;
-        $releases = $this->releaseQuery($filter, $search)->with('newsgroup:id,name')
+        $releases = $this->releaseQuery($filter, $search)->lite()->with('newsgroup:id,name')
             ->orderByDesc('updated_at')->orderByDesc('id')->paginate($perPage)->withQueryString();
         return view('admin.releases', compact('releases', 'filter', 'search', 'perPage'));
     }
@@ -156,7 +156,7 @@ class AdminController extends Controller
 
         $count = 0;
         if ($data['action'] === 'blacklist') {
-            $posters = (clone $query)->whereNotNull('poster')->distinct()->pluck('poster')->filter()->take(500);
+            $posters = (clone $query)->whereNotNull('poster')->distinct()->limit(500)->pluck('poster')->filter();
             foreach ($posters as $poster) {
                 Blacklist::firstOrCreate(['type' => 'poster', 'pattern' => mb_substr($poster, 0, 255)]);
             }
@@ -168,7 +168,7 @@ class AdminController extends Controller
         }
 
         // Einzeln speichern/löschen, damit der Suchindex mitgezogen wird
-        (clone $query)->select('*')->chunkById(500, function ($chunk) use ($data, &$count) {
+        (clone $query)->lite()->chunkById(500, function ($chunk) use ($data, &$count) {
             foreach ($chunk as $r) {
                 match ($data['action']) {
                     'ok' => $r->forceFill(['status' => 'ok', 'obfuscated' => false, 'locked' => true])->save(),
