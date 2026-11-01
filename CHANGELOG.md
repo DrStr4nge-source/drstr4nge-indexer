@@ -2,6 +2,12 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.13.8] – 2026-11-01
+
+### Behoben
+- `indexer:inspect` brach mit Fehler ab ("Scheduled command ... failed with exit code 1"), wenn ein einzelnes Release kaputte PAR2-/RAR-Daten hatte oder der Usenet-Server keine weitere Verbindung zuließ. Jetzt wird das Release übersprungen bzw. beim nächsten Lauf neu verbunden, der Grund steht im Log.
+- `indexer:inspect` lädt die Releases einzeln statt alle auf einmal (weniger Speicher)
+
 ## [1.13.7] – 2026-11-01
 
 ### Behoben

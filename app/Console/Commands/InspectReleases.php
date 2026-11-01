@@ -19,27 +19,58 @@ class InspectReleases extends Command
     public function handle(Nntp $nntp, ReleaseBuilder $builder): int
     {
         $limit = (int) ($this->option('limit') ?: config('indexer.inspect_per_run'));
-        $todo = Release::where('inspected', false)
+        // Nur die IDs holen; jedes Release einzeln mit Artikel-Liste laden (spart Speicher bei großen Releases)
+        $ids = Release::where('inspected', false)
             ->where('completion', '>=', config('indexer.min_completion'))
-            ->orderBy('id')->limit($limit)->get();
-        if ($todo->isEmpty()) {
+            ->orderBy('id')->limit($limit)->pluck('id');
+        if ($ids->isEmpty()) {
             $this->info('Nichts zu prüfen.');
             return self::SUCCESS;
         }
 
-        $nntp->connect();
-        foreach ($todo as $rel) {
+        try {
+            $nntp->connect();
+        } catch (\RuntimeException $e) {
+            // z.B. alle Verbindungen beim Crawlen belegt: beim nächsten Lauf erneut, kein Fehler im Zeitplan
+            $this->warn('Keine Verbindung zum Usenet-Server: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::warning('Prüfen (PAR2/RAR): keine Verbindung: ' . $e->getMessage());
+            return self::SUCCESS;
+        }
+        $done = $skipped = 0;
+        foreach ($ids as $id) {
+            $rel = Release::find($id);
+            if (!$rel || $rel->inspected) {
+                continue;
+            }
             try {
                 $this->inspect($nntp, $rel, $builder);
-            } catch (\RuntimeException $e) { // Netzwerkfehler: Rest beim nächsten Lauf
-                $this->error($e->getMessage());
-                \Illuminate\Support\Facades\Log::warning('Prüfen (PAR2/RAR): ' . $e->getMessage());
-                break;
+            } catch (\App\Services\NntpConnectionLost $e) {
+                // Verbindung weg: einmal neu verbinden, Release beim nächsten Lauf erneut prüfen
+                $this->warn($e->getMessage() . ', verbinde neu');
+                try {
+                    $nntp->close();
+                    $nntp->connect();
+                    continue;
+                } catch (\RuntimeException $e2) {
+                    \Illuminate\Support\Facades\Log::warning('Prüfen (PAR2/RAR): Verbindung verloren: ' . $e2->getMessage());
+                    break;
+                }
+            } catch (\Throwable $e) {
+                // Kaputte PAR2/RAR-Daten oder Ähnliches bei genau diesem Release: überspringen statt alles abzubrechen
+                $skipped++;
+                \Illuminate\Support\Facades\Log::warning(sprintf('Prüfen: Release %d "%s" übersprungen: %s', $rel->id, mb_substr((string) $rel->name, 0, 80), mb_substr($e->getMessage(), 0, 200)));
             }
             $rel->inspected = true;
-            $rel->save();
+            try {
+                $rel->save();
+                $done++;
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Prüfen: Release {$rel->id} nicht gespeichert: " . mb_substr($e->getMessage(), 0, 200));
+                Release::whereKey($rel->id)->update(['inspected' => true]); // nicht endlos erneut versuchen
+            }
         }
         $nntp->close();
+        $this->info("$done Releases geprüft" . ($skipped ? ", $skipped übersprungen (siehe Log)" : '') . '.');
         return self::SUCCESS;
     }
 
