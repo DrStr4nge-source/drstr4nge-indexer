@@ -35,8 +35,12 @@ class CredentialsController extends Controller
             'fields' => $fields,
             'groups' => self::GROUPS,
             'rclone' => (bool) trim((string) @shell_exec('command -v rclone')),
-            'gdrive' => is_file(RuntimeSettings::rcloneConfig()),
-            'gdriveFolder' => str_contains((string) config('indexer.backup.rclone_remote'), ':') ? explode(':', config('indexer.backup.rclone_remote'), 2)[1] : 'drstr4nge-backups',
+            'gdrive' => isset(self::sections()['gdrive']),
+            'mega' => isset(self::sections()['mega']),
+            'megaUser' => preg_match('/^user = (.+)$/m', self::sections()['mega'] ?? '', $mu) ? $mu[1] : '',
+            'target' => strtok((string) config('indexer.backup.rclone_remote'), ':') ?: null,
+            'megaFolder' => \App\Models\Setting::get('rclone_folder_mega') ?: 'drstr4nge-backups',
+            'gdriveFolder' => \App\Models\Setting::get('rclone_folder_gdrive') ?: (str_starts_with((string) config('indexer.backup.rclone_remote'), 'gdrive:') ? explode(':', config('indexer.backup.rclone_remote'), 2)[1] : 'drstr4nge-backups'),
             'backupAt' => Cache::get('backup.last_at'),
             'backupError' => Cache::get('backup.error'),
             'backupRunning' => ($m = Cache::get('backup.manual_started')) && (int) Cache::get('backup.last_at', 0) < $m && !Cache::get('backup.error'),
@@ -101,6 +105,10 @@ class CredentialsController extends Controller
             $p = $this->rclone(['lsd', 'gdrive:']);
             return $this->back('backup', $p->isSuccessful() ? 'Google Drive erreichbar.' : 'Google Drive nicht erreichbar: ' . trim($p->getErrorOutput()));
         }
+        if ($what === 'mega') {
+            $p = $this->rclone(['about', 'mega:']);
+            return $this->back('backup', $p->isSuccessful() ? 'MEGA erreichbar. ' . preg_replace('/\s+/', ' ', trim($p->getOutput())) : 'MEGA nicht erreichbar: ' . trim($p->getErrorOutput()));
+        }
         abort(404);
     }
 
@@ -108,8 +116,8 @@ class CredentialsController extends Controller
     public function gdrive(Request $request)
     {
         if ($request->boolean('remove')) {
-            @unlink(RuntimeSettings::rcloneConfig());
-            Setting::put('backup_rclone_remote', null);
+            self::writeSection('gdrive', null);
+            self::dropTarget('gdrive');
             return $this->back('backup', 'Google Drive getrennt.');
         }
         $data = $request->validate([
@@ -123,18 +131,112 @@ class CredentialsController extends Controller
         if (!is_array($tok) || empty($tok['access_token']) || empty($tok['refresh_token'])) {
             return back()->withInput()->withErrors(['token' => 'Das ist kein gültiger Token. Den kompletten Text zwischen ---> und <--- einfügen (beginnt mit {"access_token").']);
         }
-        $conf = RuntimeSettings::rcloneConfig();
-        @mkdir(dirname($conf), 0700, true);
-        file_put_contents($conf, "[gdrive]\ntype = drive\nscope = drive\ntoken = " . json_encode($tok, JSON_UNESCAPED_SLASHES) . "\n");
-        chmod($conf, 0600);
+        self::writeSection('gdrive', "type = drive\nscope = drive\ntoken = " . json_encode($tok, JSON_UNESCAPED_SLASHES));
         $folder = trim($data['folder'], " /");
+        self::rememberFolder();
         Setting::put('backup_rclone_remote', "gdrive:$folder");
+        Setting::put('rclone_folder_gdrive', $folder);
 
         $p = $this->rclone(['mkdir', "gdrive:$folder"]);
         if (!$p->isSuccessful()) {
             return $this->back('backup', 'Token gespeichert, aber Google Drive antwortet nicht: ' . trim($p->getErrorOutput()));
         }
         return $this->back('backup', "Google Drive verbunden. Sicherungen landen im Ordner \"$folder\".");
+    }
+
+    /** MEGA (mega.nz) mit E-Mail und Passwort verbinden. Das Passwort steht nur verschleiert (rclone obscure) in der rclone.conf. */
+    public function mega(Request $request)
+    {
+        if ($request->boolean('remove')) {
+            self::writeSection('mega', null);
+            self::dropTarget('mega');
+            return $this->back('backup', 'MEGA getrennt.');
+        }
+        $data = $request->validate([
+            'mega_user' => 'required|email|max:255',
+            'mega_pass' => 'required|string|max:500',
+            'mega_folder' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9._\- \/]+$/'],
+        ], ['mega_folder.regex' => 'Ordnername: Buchstaben, Ziffern, Leerzeichen, . _ - /']);
+        // Passwort über stdin, nicht als Argument (wäre sonst in "ps" sichtbar)
+        $ob = new Process(['rclone', 'obscure', '-']);
+        $ob->setInput($data['mega_pass']);
+        $ob->setTimeout(30);
+        $ob->run();
+        $obscured = trim($ob->getOutput());
+        if (!$ob->isSuccessful() || $obscured === '' || str_contains($obscured, "\n")) {
+            return $this->back('backup', 'rclone konnte das Passwort nicht verarbeiten: ' . trim($ob->getErrorOutput()));
+        }
+        $old = self::sections()['mega'] ?? null;
+        self::writeSection('mega', "type = mega\nuser = " . trim($data['mega_user']) . "\npass = $obscured\nhard_delete = true");
+        $folder = trim($data['mega_folder'], ' /');
+        $p = $this->rclone(['mkdir', "mega:$folder"]);
+        if (!$p->isSuccessful()) {
+            self::writeSection('mega', $old); // alte (funktionierende) Verbindung behalten
+            $err = trim($p->getErrorOutput());
+            return back()->withInput($request->except('mega_pass'))->withErrors(['mega_pass' => 'Anmeldung bei MEGA fehlgeschlagen. E-Mail und Passwort prüfen (Zwei-Faktor-Anmeldung bei MEGA muss aus sein). '
+                . ($err !== '' ? 'rclone: ' . mb_substr($err, -300) : '')]);
+        }
+        self::rememberFolder();
+        Setting::put('backup_rclone_remote', "mega:$folder");
+        Setting::put('rclone_folder_mega', $folder);
+        return $this->back('backup', "MEGA verbunden. Sicherungen landen im Ordner \"$folder\".");
+    }
+
+    /** Bereits verbundenes Ziel (gdrive oder mega) als Sicherungsziel wählen */
+    public function target(Request $request, string $remote)
+    {
+        abort_unless(isset(self::sections()[$remote]), 404);
+        self::rememberFolder();
+        $folder = Setting::get("rclone_folder_$remote") ?: 'drstr4nge-backups';
+        Setting::put('backup_rclone_remote', "$remote:$folder");
+        return $this->back('backup', 'Sicherungsziel: ' . ($remote === 'mega' ? 'MEGA' : 'Google Drive') . '.');
+    }
+
+    /** Ordner des bisherigen Ziels merken, bevor das Ziel wechselt (ältere Installationen haben ihn nur in backup_rclone_remote) */
+    private static function rememberFolder(): void
+    {
+        if (preg_match('/^(gdrive|mega):(.+)$/', (string) config('indexer.backup.rclone_remote'), $m) && !Setting::get("rclone_folder_{$m[1]}")) {
+            Setting::put("rclone_folder_{$m[1]}", $m[2]);
+        }
+    }
+
+    /** Abschnitte der rclone.conf: [name => Inhalt ohne Kopfzeile] */
+    private static function sections(): array
+    {
+        $out = [];
+        $name = null;
+        foreach (preg_split('/\R/', (string) @file_get_contents(RuntimeSettings::rcloneConfig())) as $line) {
+            if (preg_match('/^\[(.+)\]\s*$/', $line, $m)) {
+                $name = $m[1];
+                $out[$name] = '';
+            } elseif ($name !== null && trim($line) !== '') {
+                $out[$name] .= ($out[$name] === '' ? '' : "\n") . $line;
+            }
+        }
+        return $out;
+    }
+
+    /** Einen Abschnitt setzen (null = entfernen), die anderen bleiben erhalten */
+    private static function writeSection(string $name, ?string $body): void
+    {
+        $all = self::sections();
+        if ($body === null) unset($all[$name]); else $all[$name] = $body;
+        $conf = RuntimeSettings::rcloneConfig();
+        if (!$all) {
+            @unlink($conf);
+            return;
+        }
+        @mkdir(dirname($conf), 0700, true);
+        file_put_contents($conf, implode("\n", array_map(fn ($n, $b) => "[$n]\n$b\n", array_keys($all), $all)));
+        chmod($conf, 0600);
+    }
+
+    /** War das getrennte Konto das Sicherungsziel, gibt es keins mehr (bzw. das andere verbundene) */
+    private static function dropTarget(string $remote): void
+    {
+        if (str_starts_with((string) config('indexer.backup.rclone_remote'), "$remote:")) {
+            Setting::put('backup_rclone_remote', null);
+        }
     }
 
     /** Sicherung im Hintergrund starten */

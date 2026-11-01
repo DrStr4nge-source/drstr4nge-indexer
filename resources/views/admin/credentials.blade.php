@@ -43,7 +43,7 @@
                                     <input class="tm-input" id="{{ $key }}" name="{{ $key }}"
                                         type="{{ in_array($f['type'], ['port']) || str_starts_with($f['type'], 'int') ? 'number' : 'text' }}"
                                         value="{{ old($key, is_bool($f['value']) ? '' : $f['value']) }}"
-                                        @if ($key === 'backup_rclone_remote') placeholder="wird von Google Drive unten gesetzt, z.B. gdrive:drstr4nge-backups" @endif
+                                        @if ($key === 'backup_rclone_remote') placeholder="wird unten von Google Drive oder MEGA gesetzt, z.B. mega:drstr4nge-backups" @endif
                                         @if ($key === 'alert_email') placeholder="leer = an alle Admins, mehrere mit Komma" @endif>
                                 @endif
                                 @error($key)<ul class="tm-error"><li>{{ $message }}</li></ul>@enderror
@@ -73,12 +73,18 @@
                         @if ($backupError)<div class="tm-alert bad" style="margin-top:10px"><span>{{ $backupError }}</span></div>@endif
                         <p class="tm-muted tm-small" style="margin-top:8px">Gespeichert in <code>{{ config('indexer.backup.path') }}</code>, täglich um {{ config('indexer.backup.time') }} Uhr.</p>
 
-                        <h3 style="font-weight:600;margin:18px 0 8px">Google Drive</h3>
+                        <p class="tm-small" style="margin-top:14px">Cloud-Kopie: @if ($target === 'mega') <b>MEGA</b> @elseif ($target === 'gdrive') <b>Google Drive</b> @elseif ($target) <b>{{ $target }}</b> @else <b>aus</b> @endif
+                            @if ($target) <code>{{ config('indexer.backup.rclone_remote') }}</code>@endif</p>
+
+                        <h3 style="font-weight:600;margin:18px 0 8px">Google Drive @if ($target === 'gdrive')<span class="tm-chip accent">aktiv</span>@endif</h3>
                         @if (!$rclone)
                             <div class="tm-alert bad"><span>rclone ist nicht installiert. Auf dem Server: <code>sudo apt install rclone</code></span></div>
                         @elseif ($gdrive)
-                            <p class="tm-small">Verbunden, Ziel: <code>{{ config('indexer.backup.rclone_remote') }}</code></p>
+                            <p class="tm-small">Verbunden.</p>
                             <div class="tm-form-row" style="gap:8px;flex-wrap:wrap;margin-top:8px">
+                                @if ($target !== 'gdrive')
+                                    <form method="POST" action="{{ route('admin.credentials.target', 'gdrive') }}">@csrf<button class="tm-btn tm-btn-sm">Als Ziel nutzen</button></form>
+                                @endif
                                 <form method="POST" action="{{ route('admin.credentials.test', 'gdrive') }}">@csrf<button class="tm-btn tm-btn-sm">Verbindung testen</button></form>
                                 <form method="POST" action="{{ route('admin.credentials.gdrive') }}">@csrf<input type="hidden" name="remove" value="1"><button class="tm-btn tm-btn-sm">Trennen</button></form>
                             </div>
@@ -104,6 +110,45 @@
                                         @error('folder')<ul class="tm-error"><li>{{ $message }}</li></ul>@enderror
                                     </div>
                                     <div><button class="tm-btn tm-btn-primary">Google Drive verbinden</button></div>
+                                </form>
+                            </details>
+                        @endif
+
+                        <h3 style="font-weight:600;margin:22px 0 8px">MEGA @if ($target === 'mega')<span class="tm-chip accent">aktiv</span>@endif</h3>
+                        @if ($rclone)
+                            @if ($mega)
+                                <p class="tm-small">Verbunden als <code>{{ $megaUser }}</code>.</p>
+                                <div class="tm-form-row" style="gap:8px;flex-wrap:wrap;margin-top:8px">
+                                    @if ($target !== 'mega')
+                                        <form method="POST" action="{{ route('admin.credentials.target', 'mega') }}">@csrf<button class="tm-btn tm-btn-sm">Als Ziel nutzen</button></form>
+                                    @endif
+                                    <form method="POST" action="{{ route('admin.credentials.test', 'mega') }}">@csrf<button class="tm-btn tm-btn-sm">Verbindung testen</button></form>
+                                    <form method="POST" action="{{ route('admin.credentials.mega') }}">@csrf<input type="hidden" name="remove" value="1"><button class="tm-btn tm-btn-sm">Trennen</button></form>
+                                </div>
+                            @endif
+                            <details style="margin-top:10px" @if ($errors->hasAny(['mega_user', 'mega_pass', 'mega_folder']) || !$mega) open @endif>
+                                <summary class="tm-small" style="cursor:pointer">{{ $mega ? 'Neu verbinden' : 'Verbinden' }}</summary>
+                                <p class="tm-small tm-muted" style="margin:10px 0 12px">Mit E-Mail und Passwort deines MEGA-Kontos. Die Zwei-Faktor-Anmeldung bei MEGA muss dafür aus sein.
+                                    Das Passwort wird nur verschleiert auf dem Server gespeichert. Gelöschte alte Sicherungen landen nicht im MEGA-Papierkorb.</p>
+                                <form method="POST" action="{{ route('admin.credentials.mega') }}" class="tm-stack" autocomplete="off">@csrf
+                                    <div class="tm-grid cols-2" style="gap:12px">
+                                        <div>
+                                            <label class="tm-label" for="mega_user">E-Mail</label>
+                                            <input class="tm-input" id="mega_user" name="mega_user" type="email" value="{{ old('mega_user', $megaUser) }}" autocomplete="off">
+                                            @error('mega_user')<ul class="tm-error"><li>{{ $message }}</li></ul>@enderror
+                                        </div>
+                                        <div>
+                                            <label class="tm-label" for="mega_pass">Passwort</label>
+                                            <input class="tm-input" id="mega_pass" name="mega_pass" type="password" autocomplete="new-password">
+                                            @error('mega_pass')<ul class="tm-error"><li>{{ $message }}</li></ul>@enderror
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="tm-label" for="mega_folder">Ordner in MEGA</label>
+                                        <input class="tm-input" id="mega_folder" name="mega_folder" value="{{ old('mega_folder', $megaFolder) }}" style="max-width:320px">
+                                        @error('mega_folder')<ul class="tm-error"><li>{{ $message }}</li></ul>@enderror
+                                    </div>
+                                    <div><button class="tm-btn tm-btn-primary">MEGA verbinden</button></div>
                                 </form>
                             </details>
                         @endif

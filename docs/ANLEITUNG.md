@@ -286,7 +286,7 @@ Sicherung ein, ohne die `.env` anzufassen. Werte aus dem Admin gelten sofort und
 der `.env`. Passwörter werden mit dem `APP_KEY` verschlüsselt gespeichert und nie wieder angezeigt. Knöpfe zum Testen gibt es für
 Usenet ("Verbindung testen") und Mail ("Test-Mail schicken").
 
-## Sicherung (auch nach Google Drive)
+## Sicherung (auch nach Google Drive oder MEGA)
 Jede Nacht um 03:30 Uhr (`BACKUP_TIME`) sichert `indexer:backup` die Datenbank (gzip), die `.env` und das Logo in eine Datei
 `storage/app/backups/drstr4nge-backup-DATUM.tar`. Aufbewahrt werden 7 Tage (`BACKUP_KEEP_DAYS`). Von Hand:
 `sudo -u www-data php artisan indexer:backup` oder im Admin unter Zugangsdaten > Sicherung "Jetzt sichern".
@@ -295,7 +295,11 @@ Jede Nacht um 03:30 Uhr (`BACKUP_TIME`) sichert `indexer:backup` die Datenbank (
 (https://rclone.org/downloads/), dort `rclone authorize "drive"` ausführen, bei Google anmelden und den angezeigten Text in das Feld
 einfügen. Ab dann landet jede Sicherung zusätzlich im gewählten Drive-Ordner. Dort werden alte Sicherungen ebenfalls nach
 `BACKUP_KEEP_DAYS` gelöscht, endgültig und ohne Umweg über den Papierkorb. Andere Dateien im Ordner bleiben unberührt. Alternativ auf dem Server: `sudo bash setup-gdrive.sh`. Andere Ziele (Dropbox, OneDrive, S3) gehen
-mit rclone genauso (`BACKUP_RCLONE_REMOTE`). Ein zweiter Server per SSH: `BACKUP_REMOTE=backup@server2:/srv/backups/`.
+mit rclone genauso (`BACKUP_RCLONE_REMOTE`).
+
+**MEGA (mega.nz):** Admin > Zugangsdaten > Sicherung > MEGA > Verbinden, E-Mail, Passwort und Ordner eintragen. Die Zwei-Faktor-Anmeldung
+bei MEGA muss dafür aus sein. Das Passwort steht nur verschleiert in `storage/rclone/rclone.conf`. Alte Sicherungen werden endgültig gelöscht
+(nicht im MEGA-Papierkorb). Sind Google Drive und MEGA verbunden, wählst du mit "Als Ziel nutzen", wohin die Sicherungen gehen. Ein zweiter Server per SSH: `BACKUP_REMOTE=backup@server2:/srv/backups/`.
 
 **Wiederherstellen:**
 
@@ -389,7 +393,7 @@ Handy und Codes verloren: `php artisan indexer:2fa-reset deine@adresse`.
   - Releases: Filter (auffällig, verschleiert, Spam, Passwort, unvollständig), Suche nach Name/Poster, Mehrfachauswahl
     (Umschalt+Klick für Bereiche) mit Freigeben, Spam, Löschen, "Poster sperren"; auch "auf alle Treffer anwenden"
   - PreDB, Meldungen, Blacklist, Zahlungen, Einladungen, Log
-  - Zugangsdaten: Usenet, TMDB, Mail, Warnungen, Zahlung, Sicherung/Google Drive
+  - Zugangsdaten: Usenet, TMDB, Mail, Warnungen, Zahlung, Sicherung/Google Drive/MEGA
   - Einstellungen: Name der Seite, Logo-Upload (PNG, JPG oder WebP, höchstens 1 MB), Registrierung, Zwei-Faktor-Pflicht
   - Zwei-Faktor-Anmeldung
 - **Befehle:** `indexer:crawl`, `indexer:status`, `indexer:inspect`, `indexer:metadata`, `indexer:tvmaze`, `indexer:cleanup`, `indexer:recategorize`,

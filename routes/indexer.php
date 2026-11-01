@@ -58,8 +58,10 @@ Route::middleware(['auth', EnsureAdmin::class])->prefix('admin')->name('admin.')
     Route::post('/2fa/pruefen', [\App\Http\Controllers\Admin\TwoFactorController::class, 'verify'])->name('2fa.challenge.verify')->middleware('throttle:6,1');
     Route::get('/zugangsdaten', [\App\Http\Controllers\Admin\CredentialsController::class, 'edit'])->name('credentials');
     Route::post('/zugangsdaten/{group}', [\App\Http\Controllers\Admin\CredentialsController::class, 'update'])->name('credentials.update')->where('group', 'usenet|tmdb|mail|payment|backup');
-    Route::post('/zugangsdaten/test/{what}', [\App\Http\Controllers\Admin\CredentialsController::class, 'test'])->name('credentials.test')->where('what', 'usenet|mail|gdrive');
+    Route::post('/zugangsdaten/test/{what}', [\App\Http\Controllers\Admin\CredentialsController::class, 'test'])->name('credentials.test')->where('what', 'usenet|mail|gdrive|mega');
     Route::post('/zugangsdaten/gdrive', [\App\Http\Controllers\Admin\CredentialsController::class, 'gdrive'])->name('credentials.gdrive');
+    Route::post('/zugangsdaten/mega', [\App\Http\Controllers\Admin\CredentialsController::class, 'mega'])->name('credentials.mega');
+    Route::post('/zugangsdaten/ziel/{remote}', [\App\Http\Controllers\Admin\CredentialsController::class, 'target'])->name('credentials.target')->where('remote', 'gdrive|mega');
     Route::post('/zugangsdaten/sichern', [\App\Http\Controllers\Admin\CredentialsController::class, 'backupNow'])->name('credentials.backup');
     Route::get('/predb', [\App\Http\Controllers\Admin\PreController::class, 'index'])->name('predb');
     Route::post('/predb/irc', [\App\Http\Controllers\Admin\PreController::class, 'updateIrc'])->name('predb.irc');

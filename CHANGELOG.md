@@ -2,6 +2,15 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.15.0] – 2026-11-01
+
+### Neu
+- Sicherung nach MEGA (mega.nz): im Admin unter Zugangsdaten > Sicherung mit E-Mail, Passwort und Ordner verbinden. Das Passwort wird nur verschleiert gespeichert, alte Sicherungen werden endgültig gelöscht (nicht im MEGA-Papierkorb).
+- Sind Google Drive und MEGA verbunden, lässt sich mit "Als Ziel nutzen" wählen, wohin die Sicherungen gehen
+
+### Geändert
+- Google Drive trennen löscht nur noch die Google-Verbindung, andere Verbindungen in der rclone.conf bleiben erhalten
+
 ## [1.14.3] – 2026-11-01
 
 ### Behoben
