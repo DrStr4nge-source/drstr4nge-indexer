@@ -2,6 +2,12 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.13.3] – 2026-11-01
+
+### Behoben
+- Die Sperre gegen doppelte Crawls lief nach 2 Stunden ab. Bei langen Backfills startete der Cronjob deshalb weitere Crawls, die dieselbe Gruppe gleichzeitig lasen. Jetzt gilt die Sperre, solange der Crawl-Prozess lebt, und wird nur nach einem Absturz freigegeben.
+- `indexer:status` zeigt nur noch Crawls, die wirklich laufen
+
 ## [1.13.2] – 2026-11-01
 
 ### Behoben
