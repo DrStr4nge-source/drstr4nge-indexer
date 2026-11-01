@@ -2,6 +2,11 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.14.2] – 2026-11-01
+
+### Behoben
+- NZB-Dateien waren ungültiges XML, weil Anführungszeichen im Betreff nicht maskiert wurden. Radarr, Sonarr und SABnzbd meldeten "Invalid NZB: Unable to parse". Jetzt werden Anführungszeichen, Steuerzeichen und kaputtes UTF-8 korrekt behandelt; Dateien ohne Teile werden ausgelassen.
+
 ## [1.14.1] – 2026-11-01
 
 ### Behoben

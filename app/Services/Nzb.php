@@ -9,25 +9,42 @@ class Nzb
 {
     public static function build(Release $r): string
     {
+        return self::xml((string) $r->name, (string) $r->poster, (int) $r->posted_at?->timestamp, (string) $r->newsgroup?->name, $r->files);
+    }
+
+    /** NZB 1.1 aus der Artikel-Liste: [Dateiname => ['total' => n, 'segs' => [nr => ['id' => ..., 'bytes' => ...]]]] */
+    public static function xml(string $name, string $poster, int $date, string $group, array $files): string
+    {
         $x = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
            . '<!DOCTYPE nzb PUBLIC "-//newzBin//DTD NZB 1.1//EN" "http://www.newzbin.com/DTD/nzb/nzb-1.1.dtd">' . "\n"
            . '<nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">' . "\n";
 
-        $group = htmlspecialchars($r->newsgroup->name, ENT_XML1);
-        foreach ($r->files as $file => $f) {
-            $subject = htmlspecialchars("{$r->name} - \"$file\" yEnc (1/{$f['total']})", ENT_XML1);
+        $group = self::esc($group);
+        foreach ($files as $file => $f) {
+            $segs = (array) ($f['segs'] ?? []);
+            if (!$segs) {
+                continue;
+            }
+            $total = (int) ($f['total'] ?? 0) ?: count($segs);
             $x .= sprintf(
                 '<file poster="%s" date="%d" subject="%s"><groups><group>%s</group></groups><segments>' . "\n",
-                htmlspecialchars((string) $r->poster, ENT_XML1), $r->posted_at->timestamp, $subject, $group
+                self::esc($poster), $date, self::esc("$name - \"$file\" yEnc (1/$total)"), $group
             );
-            ksort($f['segs']);
-            foreach ($f['segs'] as $n => $s) {
+            ksort($segs);
+            foreach ($segs as $n => $s) {
                 $x .= sprintf('<segment bytes="%d" number="%d">%s</segment>' . "\n",
-                    $s['bytes'], $n, htmlspecialchars($s['id'], ENT_XML1));
+                    (int) ($s['bytes'] ?? 0), (int) $n, self::esc(trim((string) ($s['id'] ?? ''), '<> ')));
             }
             $x .= "</segments></file>\n";
         }
         return $x . "</nzb>\n";
+    }
+
+    /** Sicher für XML-Attribute und -Text: Anführungszeichen, &, <, >, kaputtes UTF-8 und Steuerzeichen */
+    private static function esc(string $s): string
+    {
+        $s = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $s) ?? '';
+        return htmlspecialchars($s, ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
     /** Prüft Limits, zählt den Download und liefert die NZB-Datei. */
