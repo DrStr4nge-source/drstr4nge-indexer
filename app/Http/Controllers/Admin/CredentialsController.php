@@ -157,6 +157,13 @@ class CredentialsController extends Controller
             'mega_pass' => 'required|string|max:500',
             'mega_folder' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9._\- \/]+$/'],
         ], ['mega_folder.regex' => 'Ordnername: Buchstaben, Ziffern, Leerzeichen, . _ - /']);
+        // Das Ubuntu-Paket von rclone hat kein MEGA
+        $bk = new Process(['rclone', 'help', 'backends']);
+        $bk->run();
+        if (!preg_match('/^\s*mega\b/m', $bk->getOutput())) {
+            return back()->withInput($request->except('mega_pass'))->withErrors(['mega_pass' => 'Dein rclone kann kein MEGA (das Ubuntu-Paket hat es nicht). Einmal das Update einspielen, das installiert rclone von rclone.org: '
+                . 'cd /tmp && rm -rf dsi && git clone -q https://github.com/DrStr4nge-source/drstr4nge-indexer.git dsi && sudo bash dsi/update.sh']);
+        }
         // Passwort über stdin, nicht als Argument (wäre sonst in "ps" sichtbar)
         $ob = new Process(['rclone', 'obscure', '-']);
         $ob->setInput($data['mega_pass']);

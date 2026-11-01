@@ -14,7 +14,7 @@ GDRIVE_FOLDER="${GDRIVE_FOLDER:-drstr4nge-backups}"
 gdrive_main() {
     [[ $EUID -eq 0 ]] || die "Bitte mit sudo starten: sudo bash setup-gdrive.sh"
     [[ -f "$APP_DIR/.env" ]] || die "Keine Installation in $APP_DIR gefunden."
-    command -v rclone >/dev/null || { info "rclone installieren"; apt-get install -y rclone >/dev/null; }
+    command -v rclone >/dev/null || { info "rclone installieren"; command -v install_rclone >/dev/null && install_rclone || apt-get install -y rclone >/dev/null; }
 
     local conf_dir="$APP_DIR/storage/rclone" conf
     conf="$conf_dir/rclone.conf"

@@ -2,6 +2,11 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.15.1] – 2026-11-01
+
+### Behoben
+- MEGA ging nicht ("didn't find backend called mega"), weil das rclone-Paket von Ubuntu kein MEGA enthält. `update.sh` und `install.sh` installieren jetzt rclone von rclone.org (Google-Drive-Verbindungen bleiben erhalten). Der Admin zeigt einen klaren Hinweis, falls rclone noch kein MEGA kann.
+
 ## [1.15.0] – 2026-11-01
 
 ### Neu

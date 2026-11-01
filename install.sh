@@ -329,8 +329,24 @@ ask_settings() {
 install_base() {
     info "Basis-Pakete"
     apt-get update -y
-    apt-get install -y ca-certificates curl gnupg unzip git software-properties-common acl cron openssl rsync rclone
+    apt-get install -y ca-certificates curl gnupg unzip git software-properties-common acl cron openssl rsync
+    install_rclone
     ok "Basis-Pakete installiert"
+}
+
+# rclone von rclone.org: das Ubuntu-Paket hat kein MEGA (und ist älter). Google-Drive-Verbindungen bleiben dabei erhalten.
+install_rclone() {
+    if command -v rclone >/dev/null && rclone help backends 2>/dev/null | grep -qw mega; then
+        return 0
+    fi
+    command -v unzip >/dev/null || apt-get install -y unzip >/dev/null
+    if dpkg -s rclone >/dev/null 2>&1; then apt-get remove -y rclone >/dev/null 2>&1 || true; fi
+    if curl -fsSL https://rclone.org/install.sh | bash >/dev/null 2>&1 && rclone help backends 2>/dev/null | grep -qw mega; then
+        ok "rclone $(rclone version 2>/dev/null | head -1 | awk '{print $2}') installiert (mit MEGA)"
+    else
+        warn "rclone von rclone.org nicht installiert, nehme das Ubuntu-Paket (ohne MEGA)"
+        apt-get install -y rclone >/dev/null || warn "rclone nicht installiert (nur für Cloud-Kopie der Sicherung nötig)"
+    fi
 }
 
 install_php() {

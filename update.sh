@@ -48,10 +48,11 @@ update_main() {
         || { warn "Zwischenspeichern nicht möglich, läuft trotzdem (nur etwas langsamer)"; (cd "$APP_DIR" && sudo -u "$WEB_USER" php artisan config:clear && sudo -u "$WEB_USER" php artisan route:clear) >/dev/null; }
     ok "Datenbank aktuell"
 
-    # Werkzeuge für Sicherung (rsync, rclone für Google Drive)
-    if ! command -v rclone >/dev/null || ! command -v rsync >/dev/null; then
-        apt-get install -y rsync rclone >/dev/null && ok "rsync und rclone installiert" || warn "rsync/rclone nicht installiert (nur für Kopie der Sicherung nötig)"
+    # Werkzeuge für Sicherung (rsync, rclone für Google Drive und MEGA)
+    if ! command -v rsync >/dev/null; then
+        apt-get install -y rsync >/dev/null && ok "rsync installiert" || warn "rsync nicht installiert (nur für Kopie auf zweiten Server nötig)"
     fi
+    install_rclone
 
     info "Pre-Dienst"
     if [[ ! -f "$PRE_SERVICE" ]]; then
