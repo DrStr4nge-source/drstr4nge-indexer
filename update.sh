@@ -37,7 +37,10 @@ update_main() {
 
     info "Datenbank und Zwischenspeicher"
     chown -R "$WEB_USER:$WEB_USER" "$APP_DIR"
-    (cd "$APP_DIR" && sudo -u "$WEB_USER" php artisan migrate --force && sudo -u "$WEB_USER" php artisan optimize:clear)
+    (cd "$APP_DIR" && sudo -u "$WEB_USER" php artisan migrate --force \
+        && sudo -u "$WEB_USER" php artisan config:clear && sudo -u "$WEB_USER" php artisan route:clear \
+        && sudo -u "$WEB_USER" php artisan view:clear && sudo -u "$WEB_USER" php artisan event:clear)
+    # Kein optimize:clear/cache:clear: im Cache stehen Status, Sicherungszeit, Überwachung und Crawl-Sperren
     ok "Datenbank aktuell"
 
     # Werkzeuge für Sicherung (rsync, rclone für Google Drive)

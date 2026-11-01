@@ -2,6 +2,11 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.13.4] – 2026-11-01
+
+### Behoben
+- `update.sh` leerte den Zwischenspeicher komplett (`optimize:clear`). Dabei gingen Status-Zeiten (letzte Sicherung, letzte Läufe), der Zustand der Überwachung und die Crawl-Sperren verloren. Jetzt werden nur Konfiguration, Routen, Ansichten und Events neu geladen.
+
 ## [1.13.3] – 2026-11-01
 
 ### Behoben
