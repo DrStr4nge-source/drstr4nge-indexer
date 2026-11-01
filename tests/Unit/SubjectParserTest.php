@@ -70,4 +70,16 @@ class SubjectParserTest extends TestCase
             $this->assertSame($out, SubjectParser::stripExtensions($in), $in);
         }
     }
+
+    public function test_dateiname_ohne_anfuehrungszeichen(): void
+    {
+        $a = SubjectParser::parse('Pandora.Feuer.und.Eis.2025.German.BDRiP.x264 - PL3X.vol001+002.par2 yEnc (1/3)');
+        $b = SubjectParser::parse('Pandora.Feuer.und.Eis.2025.German.BDRiP.x264 - PL3X.rar yEnc (12/1500)');
+        $this->assertSame('Pandora.Feuer.und.Eis.2025.German.BDRiP.x264-PL3X', $a['prefixName']);
+        $this->assertSame($a['prefixName'], $b['prefixName']); // gleiches Release
+        $this->assertSame('Pandora.Feuer.und.Eis.2025.German.BDRiP.x264 - PL3X.rar', $b['file']);
+        $this->assertSame([12, 1500], [$b['part'], $b['parts']]);
+        // ohne Dateiendung bleibt alles wie vorher
+        $this->assertSame('Ein Film 2020 1080p', SubjectParser::parse('Ein Film 2020 1080p yEnc (1/5)')['prefixName']);
+    }
 }

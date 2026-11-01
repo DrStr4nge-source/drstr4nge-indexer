@@ -2,6 +2,14 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.13.2] – 2026-11-01
+
+### Behoben
+- Steht der Dateiname ohne Anführungszeichen im Betreff (z.B. `Name - GRP.vol001+002.par2 yEnc (1/3)`), wurde jede Datei ein eigenes Release. Jetzt bilden alle Dateien ein Release, Name in Szene-Schreibweise (`Name-GRP`).
+
+### Neu
+- `indexer:repair-split`: führt so zerstückelte Releases aus früheren Crawls zusammen (`--dry-run` zählt nur)
+
 ## [1.13.1] – 2026-11-01
 
 ### Behoben

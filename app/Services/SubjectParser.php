@@ -11,6 +11,9 @@ namespace App\Services;
  */
 class SubjectParser
 {
+    /** Betreff endet auf eine typische Dateiendung */
+    private const FILE_END = '/\.(vol\d+[+-]\d+\.par2|par2|part\d+\.rar|rar|r\d{2,3}|7z|zip|\d{3}|nfo|sfv|nzb|mkv|mp4|avi|m4v|ts|m2ts|iso|mp3|flac|epub|pdf)$/i';
+
     /** Wörter, die manche Uploader statt eines Namens in den Betreff schreiben */
     private const GENERIC = ['description', 'desc', 'yenc', 'upload', 'uploads', 'post', 'posts', 'file', 'files', 'datei', 'dateien',
         'rar', 'par2', 'nzb', 'misc', 'new', 'test', 'part', 'sample', 'archive', 'archiv', 'backup'];
@@ -62,6 +65,17 @@ class SubjectParser
         $prefixName = self::cleanPrefix($prefix);
         $fileBase = $file !== null && $file !== '' ? self::stripExtensions($file) : null;
 
+        // Dateiname ohne Anführungszeichen ("Name - GRP.vol001+002.par2 yEnc (1/3)"): Endung abschneiden,
+        // damit alle Dateien eines Posts ein Release bilden und nicht jede Datei ein eigenes
+        if ($file === null && $prefixName !== '' && preg_match(self::FILE_END, $prefixName)) {
+            $base = self::stripExtensions($prefixName);
+            if ($base !== '' && $base !== $prefixName) {
+                $file = $prefixName;
+                $fileBase = $base;
+                $prefixName = self::sceneName($base);
+            }
+        }
+
         return [
             'file' => $file ?: ($prefixName !== '' ? $prefixName : 'datei'),
             'part' => $part,
@@ -104,6 +118,12 @@ class SubjectParser
             return false;
         }
         return !Obfuscation::looks($n);
+    }
+
+    /** "Name.x264 - GRP" => "Name.x264-GRP" (Szene-Schreibweise, damit Pre-Daten passen) */
+    public static function sceneName(string $n): string
+    {
+        return preg_match('/^(\S+)\s+-\s+([A-Za-z0-9]+)$/', $n, $m) ? $m[1] . '-' . $m[2] : $n;
     }
 
     private static function cleanPrefix(string $p): string
