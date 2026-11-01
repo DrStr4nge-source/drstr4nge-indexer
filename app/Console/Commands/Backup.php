@@ -46,7 +46,7 @@ class Backup extends Command
             if ($dump === '') {
                 throw new \RuntimeException('mariadb-dump/mysqldump nicht gefunden');
             }
-            $this->runShell(sprintf('%s --defaults-extra-file=%s --single-transaction --quick --routines --no-tablespaces %s | gzip -6 > %s',
+            $this->runShell(sprintf('%s --defaults-extra-file=%s --single-transaction --quick --max-allowed-packet=1G --routines --no-tablespaces %s | gzip -6 > %s',
                 escapeshellarg($dump), escapeshellarg($cnf), escapeshellarg($db['database']), escapeshellarg("$work/datenbank.sql.gz")), 3600);
             unlink($cnf);
 

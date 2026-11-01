@@ -390,9 +390,10 @@ DB_PASS=""
 # Große Releases (hunderte Teile): MariaDB-Paketgröße auf 64 MB, dauerhaft und sofort (ohne Neustart)
 tune_mariadb() {
     mkdir -p "$(dirname "$MYSQL_CONF")"
-    printf '# DrStr4nge Indexer\n[mysqld]\nmax_allowed_packet = 64M\n' > "$MYSQL_CONF"
+    # net_*_timeout: Sicherung (mariadb-dump | gzip) darf bei großen Zeilen länger als 60 s brauchen, sonst "Lost connection"
+    printf '# DrStr4nge Indexer\n[mysqld]\nmax_allowed_packet = 64M\nnet_read_timeout = 600\nnet_write_timeout = 600\n' > "$MYSQL_CONF"
     chmod 644 "$MYSQL_CONF"
-    mysql -e "SET GLOBAL max_allowed_packet = 67108864;" 2>/dev/null || warn "MariaDB-Limit nicht sofort gesetzt, gilt nach dem nächsten Neustart"
+    mysql -e "SET GLOBAL max_allowed_packet = 67108864; SET GLOBAL net_read_timeout = 600; SET GLOBAL net_write_timeout = 600;" 2>/dev/null || warn "MariaDB-Limits nicht sofort gesetzt, gelten nach dem nächsten Neustart"
 }
 
 install_mariadb() {

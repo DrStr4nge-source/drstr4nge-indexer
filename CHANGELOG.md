@@ -2,6 +2,11 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.14.3] – 2026-11-01
+
+### Behoben
+- Sicherung brach bei großen Datenbanken ab ("mariadb-dump: Error 2013: Lost connection to server during query when dumping table `releases`"). `mariadb-dump` darf jetzt Zeilen bis 1 GB lesen, und `update.sh`/`install.sh` erhöhen `net_read_timeout`/`net_write_timeout` von MariaDB auf 600 Sekunden (ohne Neustart).
+
 ## [1.14.2] – 2026-11-01
 
 ### Behoben
