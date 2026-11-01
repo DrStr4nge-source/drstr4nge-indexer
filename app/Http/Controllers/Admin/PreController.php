@@ -31,9 +31,9 @@ class PreController extends Controller
         return view('admin.predb', [
             'pres' => $pres,
             'q' => $q,
-            'total' => Predb::count(),
-            'today' => Predb::where('created_at', '>=', now()->startOfDay())->count(),
-            'linked' => Release::whereNotNull('pre_id')->count(),
+            'total' => \App\Support\Stats::remember('pres_total', fn () => Predb::count()),
+            'today' => \App\Support\Stats::remember('pres_today', fn () => Predb::where('predate', '>=', now()->startOfDay())->count(), 120),
+            'linked' => \App\Support\Stats::remember('pres_linked', fn () => Release::whereNotNull('pre_id')->count()),
             'connectedAt' => $connected ? \Illuminate\Support\Carbon::createFromTimestamp($connected) : null,
             'lastAt' => $last ? \Illuminate\Support\Carbon::createFromTimestamp($last) : null,
             'apiAt' => $api ? \Illuminate\Support\Carbon::createFromTimestamp($api) : null,

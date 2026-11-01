@@ -2,6 +2,15 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.13.6] – 2026-11-01
+
+### Geändert
+- Schnellere Seiten bei vielen Releases: neue Datenbank-Indizes für sichtbare Releases (Startseite, Suche, Kategorien, Titel) und die Admin-Release-Liste
+- Teure Zählungen (Releases, Pres, User) werden einige Minuten zwischengespeichert, Cover-Reihen der Startseite eine Minute
+- Suche zählt höchstens 10.000 Treffer (spart bei sehr vielen Treffern viel Zeit)
+- CPU-Anzeige im Admin wartet nicht mehr bei jedem Aufruf eine Viertelsekunde
+- `update.sh` stellt Konfiguration, Routen, Ansichten und Events vorab zusammen (`config:cache` usw.)
+
 ## [1.13.5] – 2026-11-01
 
 ### Behoben

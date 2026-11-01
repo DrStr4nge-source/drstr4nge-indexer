@@ -10,9 +10,19 @@ class SystemStats
 {
     public static function collect(string $diskPath = '/'): array
     {
-        $a = self::read('/proc/stat');
-        usleep(250000);
+        // CPU: Unterschied zur letzten Messung (Admin-Seite fragt alle 5 s). Nur ohne frischen Vorwert kurz warten.
         $b = self::read('/proc/stat');
+        $prev = self::cache('get');
+        if ($prev && time() - $prev['t'] <= 60) {
+            $a = $prev['stat'];
+        } else {
+            $a = $b;
+            usleep(100000);
+            $b = self::read('/proc/stat');
+        }
+        if ($b) {
+            self::cache('put', ['t' => time(), 'stat' => $b]);
+        }
         $mem = self::parseMeminfo(self::read('/proc/meminfo'));
         $load = self::parseLoadavg(self::read('/proc/loadavg'));
         $uptime = self::read('/proc/uptime');
@@ -79,6 +89,23 @@ class SystemStats
         }
         $used = max(0, min($total, $used));
         return ['total' => $total, 'used' => $used, 'percent' => round($used / $total * 100, 1)];
+    }
+
+    /** Vorwert im Laravel-Cache (fehlt Laravel, z.B. in Tests: ohne Vorwert) */
+    private static function cache(string $op, ?array $v = null): ?array
+    {
+        if (!class_exists(\Illuminate\Support\Facades\Cache::class) || !\Illuminate\Support\Facades\Cache::getFacadeRoot()) {
+            return null;
+        }
+        try {
+            if ($op === 'get') {
+                return \Illuminate\Support\Facades\Cache::get('system.cpu');
+            }
+            \Illuminate\Support\Facades\Cache::put('system.cpu', $v, 120);
+            return null;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     private static function read(string $file): ?string

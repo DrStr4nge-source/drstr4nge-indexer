@@ -16,11 +16,11 @@ class AdminController extends Controller
     public function index()
     {
         return view('admin.index', [
-            'users' => User::count(),
+            'users' => \App\Support\Stats::remember('users', fn () => User::count(), 60),
             'vips' => User::where('vip_until', '>', now())->count(),
-            'releases' => Release::count(),
+            'releases' => \App\Support\Stats::remember('releases', fn () => Release::count()),
             'groups' => Newsgroup::where('active', true)->count(),
-            'grabs' => Download::where('created_at', '>=', now()->startOfDay())->count(),
+            'grabs' => \App\Support\Stats::remember('grabs', fn () => Download::where('created_at', '>=', now()->startOfDay())->count(), 60),
             'income' => Payment::where('status', 'paid')->sum('amount'),
             'system' => SystemStats::collect(base_path()),
             'problems' => \Illuminate\Support\Facades\Cache::get('health.problems', []),
@@ -30,7 +30,7 @@ class AdminController extends Controller
                 'crawl' => \Illuminate\Support\Facades\Cache::get('schedule.last.crawl'),
                 'running' => count(\App\Support\CrawlLock::running(Newsgroup::pluck('id'))),
                 'irc' => \Illuminate\Support\Facades\Cache::get('pre_irc.connected_at'),
-                'pres' => \App\Models\Predb::where('created_at', '>=', now()->startOfDay())->count(),
+                'pres' => \App\Support\Stats::remember('pres_today', fn () => \App\Models\Predb::where('predate', '>=', now()->startOfDay())->count(), 120),
                 'reports' => \App\Models\ReleaseReport::where('status', 'open')->count(),
             ],
             'no2fa' => !request()->user()->hasTwoFactor(),

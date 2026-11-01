@@ -41,7 +41,8 @@ class ReleaseSearch
         if ($extra) {
             $extra($query);
         }
-        $total = (clone $query)->toBase()->getCountForPagination();
+        // Zählen kostet bei Hunderttausenden Treffern viel Zeit: höchstens 10.000 zählen (Seiten reichen trotzdem weit)
+        $total = \Illuminate\Support\Facades\DB::query()->fromSub((clone $query)->toBase()->select('releases.id')->limit(10000), 'treffer')->count();
         $rows = $query->orderByDesc('posted_at')->orderByDesc('id')->offset($offset)->limit($limit)->get();
         return ['rows' => $rows, 'total' => $total, 'engine' => 'mysql'];
     }

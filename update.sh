@@ -42,6 +42,10 @@ update_main() {
         && sudo -u "$WEB_USER" php artisan config:clear && sudo -u "$WEB_USER" php artisan route:clear \
         && sudo -u "$WEB_USER" php artisan view:clear && sudo -u "$WEB_USER" php artisan event:clear)
     # Kein optimize:clear/cache:clear: im Cache stehen Status, Sicherungszeit, Überwachung und Crawl-Sperren
+    # Konfiguration, Routen, Ansichten und Events vorab zusammenstellen: jede Seite lädt schneller
+    (cd "$APP_DIR" && sudo -u "$WEB_USER" php artisan config:cache && sudo -u "$WEB_USER" php artisan route:cache \
+        && sudo -u "$WEB_USER" php artisan view:cache && sudo -u "$WEB_USER" php artisan event:cache) >/dev/null \
+        || { warn "Zwischenspeichern nicht möglich, läuft trotzdem (nur etwas langsamer)"; (cd "$APP_DIR" && sudo -u "$WEB_USER" php artisan config:clear && sudo -u "$WEB_USER" php artisan route:clear) >/dev/null; }
     ok "Datenbank aktuell"
 
     # Werkzeuge für Sicherung (rsync, rclone für Google Drive)
