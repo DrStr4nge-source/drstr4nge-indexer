@@ -2,6 +2,11 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.14.1] – 2026-11-01
+
+### Behoben
+- "Neu einlesen" im Admin wirkte nicht, solange die Gruppe gerade gecrawlt wurde: der laufende Crawl schrieb seinen Stand wieder drüber. Jetzt hört die Gruppe nach dem aktuellen Block auf und startet beim nächsten Crawl mit dem eingestellten Backfill neu.
+
 ## [1.14.0] – 2026-11-01
 
 ### Neu

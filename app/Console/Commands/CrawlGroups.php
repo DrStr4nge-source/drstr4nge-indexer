@@ -140,6 +140,11 @@ class CrawlGroups extends Command
                     $end = min($start + $batch - 1, $high);
                     $rows = $this->retry($nntp, $g->name, fn () => $nntp->xover($start, $end));
                     $n = $builder->ingest($g, $rows);
+                    // Im Admin "Neu einlesen" gedrückt, während diese Gruppe läuft: aufhören, beim nächsten Crawl neu starten
+                    if ($g->last_article > 0 && (int) Newsgroup::whereKey($g->id)->value('last_article') === 0) {
+                        $this->info("{$g->name}: im Admin auf neu einlesen gesetzt, startet beim nächsten Crawl neu");
+                        break;
+                    }
                     $g->update(['last_article' => $end]);
                     CrawlLock::progress((int) $g->id, $g->name, $end, $high);
                     $this->info("{$g->name}: $start-$end ($n Releases aktualisiert)");
