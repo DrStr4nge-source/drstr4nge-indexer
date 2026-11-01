@@ -6,7 +6,7 @@ class Release extends Model
 {
     protected $guarded = [];
     protected $casts = [
-        'files' => 'array', 'posted_at' => 'datetime',
+        'files' => \App\Casts\ReleaseFiles::class, 'posted_at' => 'datetime',
         'obfuscated' => 'boolean', 'inspected' => 'boolean', 'locked' => 'boolean', 'meta_checked' => 'boolean',
     ];
 

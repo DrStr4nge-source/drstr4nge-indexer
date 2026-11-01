@@ -36,6 +36,7 @@ update_main() {
     ok ".env ergänzt (vorhandene Werte unverändert)"
 
     info "Datenbank und Zwischenspeicher"
+    if command -v mysql >/dev/null; then tune_mariadb && ok "MariaDB: max_allowed_packet 64 MB"; fi
     chown -R "$WEB_USER:$WEB_USER" "$APP_DIR"
     (cd "$APP_DIR" && sudo -u "$WEB_USER" php artisan migrate --force \
         && sudo -u "$WEB_USER" php artisan config:clear && sudo -u "$WEB_USER" php artisan route:clear \

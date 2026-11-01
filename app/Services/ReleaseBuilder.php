@@ -96,7 +96,12 @@ class ReleaseBuilder
                 $rel->obfuscated = $d['anon'] || Obfuscation::looks($rel->name);
             }
             $this->classify($rel);
-            $rel->save();
+            try {
+                $rel->save();
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Ein einzelnes Release darf nicht die ganze Gruppe aufhalten (z.B. zu groß für die Datenbank)
+                \Illuminate\Support\Facades\Log::warning(sprintf('Release "%s" (%s Dateien) nicht gespeichert: %s', mb_substr($rel->name, 0, 120), count($files), mb_substr($e->getMessage(), 0, 200)));
+            }
         }
         return count($acc);
     }

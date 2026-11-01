@@ -391,7 +391,7 @@ Handy und Codes verloren: `php artisan indexer:2fa-reset deine@adresse`.
   - Zwei-Faktor-Anmeldung
 - **Befehle:** `indexer:crawl`, `indexer:status`, `indexer:inspect`, `indexer:metadata`, `indexer:tvmaze`, `indexer:cleanup`, `indexer:recategorize`,
   `indexer:search-index`, `indexer:test-nntp`, `indexer:backup`, `indexer:health`, `indexer:pre-irc`, `indexer:pre-fetch`, `indexer:pre-match`,
-  `indexer:pre-deobfuscate`, `indexer:pre-import`, `indexer:repair-split`, `indexer:2fa-reset`, `indexer:make-admin mail@beispiel.de --create`.
+  `indexer:pre-deobfuscate`, `indexer:pre-import`, `indexer:repair-split`, `indexer:compress-files`, `indexer:2fa-reset`, `indexer:make-admin mail@beispiel.de --create`.
 - **Zeit:** gespeichert wird in UTC, angezeigt und geplant in deutscher Zeit (`INDEXER_TIMEZONE=Europe/Berlin`).
 - **Zeitplan:** steht in `routes/indexer-schedule.php` und kommt mit jedem Update mit.
 - **Tests:** `php artisan test` (Unit- und Feature-Tests).

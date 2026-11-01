@@ -36,6 +36,7 @@ NGINX_SITE="${NGINX_SITE:-/etc/nginx/sites-available/usenet-indexer}"
 NGINX_ENABLED_DIR="${NGINX_ENABLED_DIR:-/etc/nginx/sites-enabled}"
 CRON_FILE="${CRON_FILE:-/etc/cron.d/usenet-indexer}"
 PRE_SERVICE="${PRE_SERVICE:-/etc/systemd/system/drstr4nge-pre.service}"
+MYSQL_CONF="${MYSQL_CONF:-/etc/mysql/mariadb.conf.d/99-drstr4nge.cnf}"
 LOG_FILE="${LOG_FILE:-/var/log/usenet-indexer-install.log}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -386,6 +387,14 @@ install_node() {
 }
 
 DB_PASS=""
+# Große Releases (hunderte Teile): MariaDB-Paketgröße auf 64 MB, dauerhaft und sofort (ohne Neustart)
+tune_mariadb() {
+    mkdir -p "$(dirname "$MYSQL_CONF")"
+    printf '# DrStr4nge Indexer\n[mysqld]\nmax_allowed_packet = 64M\n' > "$MYSQL_CONF"
+    chmod 644 "$MYSQL_CONF"
+    mysql -e "SET GLOBAL max_allowed_packet = 67108864;" 2>/dev/null || warn "MariaDB-Limit nicht sofort gesetzt, gilt nach dem nächsten Neustart"
+}
+
 install_mariadb() {
     info "MariaDB"
     apt-get install -y mariadb-server
@@ -398,6 +407,7 @@ ALTER USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
 GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
 FLUSH PRIVILEGES;
 SQL
+    tune_mariadb
     ok "Datenbank ${DB_NAME}, User ${DB_USER} (Passwort steht später in der .env)"
 }
 

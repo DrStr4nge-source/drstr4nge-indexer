@@ -2,6 +2,18 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.13.5] – 2026-11-01
+
+### Behoben
+- Riesige Releases (hunderte Teile, Artikel-Liste über 16 MB) ließen sich nicht speichern, und die ganze Newsgroup blieb dabei hängen. Ein Release, das nicht gespeichert werden kann, wird jetzt übersprungen und im Log vermerkt.
+- `update.sh` und `install.sh` setzen `max_allowed_packet` von MariaDB auf 64 MB (ohne Neustart)
+
+### Geändert
+- Artikel-Listen werden komprimiert gespeichert, etwa 10-mal kleiner. Spart viel Platz in Datenbank und Sicherung.
+
+### Neu
+- `indexer:compress-files`: komprimiert die Artikel-Listen vorhandener Releases
+
 ## [1.13.4] – 2026-11-01
 
 ### Behoben
