@@ -51,7 +51,11 @@ class RuntimeSettings
             if ($v === null) {
                 continue;
             }
-            $set[$path] = self::cast($v, $type);
+            $val = self::cast($v, $type);
+            if ($type === 'secret' && $val === null) {
+                continue; // nicht entschlüsselbar (APP_KEY geändert): Wert aus der .env behalten statt leer
+            }
+            $set[$path] = $val;
         }
         if (isset($set['mail.mailers.smtp.host'])) {
             $set['mail.default'] = 'smtp';

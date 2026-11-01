@@ -60,6 +60,9 @@ return new class extends Migration {
         Schema::dropIfExists('downloads');
         Schema::dropIfExists('releases');
         Schema::dropIfExists('newsgroups');
-        Schema::table('users', fn (Blueprint $t) => $t->dropColumn(['api_key', 'is_admin', 'is_banned', 'vip_until']));
+        Schema::table('users', function (Blueprint $t) {
+            $t->dropUnique(['api_key']); // SQLite: Index vor der Spalte entfernen
+            $t->dropColumn(['api_key', 'is_admin', 'is_banned', 'vip_until']);
+        });
     }
 };

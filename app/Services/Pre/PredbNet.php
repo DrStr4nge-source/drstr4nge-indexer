@@ -23,10 +23,14 @@ class PredbNet
 
     private static function request(array $query): array
     {
-        $res = Http::timeout(20)->retry(2, 2000, throw: false)
-            ->withUserAgent('DrStr4nge-Indexer/' . config('indexer.version'))
-            ->acceptJson()
-            ->get(rtrim((string) config('indexer.predb_api.url'), '/') . '/', $query);
+        try {
+            $res = Http::timeout(20)->retry(2, 2000, throw: false)
+                ->withUserAgent('DrStr4nge-Indexer/' . config('indexer.version'))
+                ->acceptJson()
+                ->get(rtrim((string) config('indexer.predb_api.url'), '/') . '/', $query);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            throw new \RuntimeException('predb.net nicht erreichbar: ' . $e->getMessage(), 0, $e);
+        }
         if ($res->status() === 429) {
             throw new \RuntimeException('predb.net: zu viele Anfragen (429), später erneut');
         }

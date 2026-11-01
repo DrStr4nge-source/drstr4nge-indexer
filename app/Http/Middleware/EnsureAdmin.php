@@ -9,7 +9,7 @@ class EnsureAdmin
     public function handle(Request $request, Closure $next)
     {
         $user = $request->user();
-        abort_unless($user?->is_admin, 403);
+        abort_unless($user?->is_admin && !$user->is_banned, 403);
 
         // Zwei-Faktor: nach dem Login einmal pro Sitzung den Code abfragen
         if ($user->hasTwoFactor() && $request->session()->get('2fa_passed') !== $user->id && !$request->routeIs('admin.2fa.challenge*')) {

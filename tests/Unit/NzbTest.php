@@ -32,4 +32,10 @@ class NzbTest extends TestCase
         $this->assertSame('a&b@x', (string) $segs[0]);
         $this->assertSame('1', (string) $segs[0]['number']);
     }
+
+    public function test_xml_esc_entfernt_steuerzeichen(): void
+    {
+        $this->assertSame('a&amp;b &quot;c&quot; d', \App\Support\Xml::esc("a&b \"c\" \x1bd"));
+        $this->parse('<x>' . \App\Support\Xml::esc("Name\x01\x1b mit <Tag>") . '</x>');
+    }
 }

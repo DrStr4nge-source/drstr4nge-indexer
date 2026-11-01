@@ -31,10 +31,19 @@ class PreDeobfuscate extends Command
             if ($m) {
                 $tol = PreMatcher::tolerance($m['size'], $m['exact']);
                 $posted = $rel->posted_at ?? $rel->created_at;
+                // Dateianzahl schon in der Abfrage prüfen (gleiche Regel wie PreMatcher::pick), damit das Limit
+                // keine passenden Pres abschneidet. Mehr als 50 Treffer = nicht eindeutig, dann lieber nichts.
+                $d = $m['exact'] ? 3 : 2;
                 $cands = Predb::whereBetween('size', [$m['size'] - $tol, $m['size'] + $tol])
                     ->whereBetween('predate', [$posted->copy()->subDays(3), $posted->copy()->addHours(2)])
-                    ->limit(50)->get(['id', 'size', 'files', 'title'])->toArray();
-                if ($pre = PreMatcher::pick($m, $cands)) {
+                    ->where(function ($q) use ($m, $d) {
+                        $q->whereBetween('files', [max(1, $m['files'] - $d), $m['files'] + $d]);
+                        if ($m['exact']) {
+                            $q->orWhereNull('files')->orWhere('files', 0);
+                        }
+                    })
+                    ->limit(51)->get(['id', 'size', 'files', 'title'])->toArray();
+                if (count($cands) <= 50 && ($pre = PreMatcher::pick($m, $cands))) {
                     $found++;
                     $this->line(sprintf('%d: %s (%s, %d Dateien%s)', $rel->id, $pre['title'], \App\Support\Format::bytes($m['size']), $m['files'], $m['exact'] ? ', PAR2' : ''));
                     if (!$this->option('dry-run')) {

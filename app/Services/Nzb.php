@@ -43,17 +43,22 @@ class Nzb
     /** Sicher für XML-Attribute und -Text: Anführungszeichen, &, <, >, kaputtes UTF-8 und Steuerzeichen */
     private static function esc(string $s): string
     {
-        $s = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $s) ?? '';
-        return htmlspecialchars($s, ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        return \App\Support\Xml::esc($s);
     }
 
     /** Prüft Limits, zählt den Download und liefert die NZB-Datei. */
     public static function download(User $u, Release $r)
     {
         abort_if($u->is_banned, 403, 'Account gesperrt.');
-        abort_unless($u->canGrab(), 429, 'Tageslimit erreicht. VIP hat kein Limit.');
-
-        Download::create(['user_id' => $u->id, 'release_id' => $r->id]);
+        // Limit prüfen und Download zählen unter einer Sperre pro User: gleichzeitige Abrufe können das Limit nicht überholen
+        $lock = \Illuminate\Support\Facades\Cache::lock('grab:' . $u->id, 10);
+        abort_unless($lock->block(5), 429, 'Zu viele gleichzeitige Downloads, bitte erneut versuchen.');
+        try {
+            abort_unless($u->canGrab(), 429, 'Tageslimit erreicht. VIP hat kein Limit.');
+            Download::create(['user_id' => $u->id, 'release_id' => $r->id]);
+        } finally {
+            $lock->release();
+        }
 
         $fname = preg_replace('/[^\w.\- ]+/', '_', $r->name) . '.nzb';
         return response(self::build($r), 200, [

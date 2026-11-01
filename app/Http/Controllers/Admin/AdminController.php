@@ -57,13 +57,17 @@ class AdminController extends Controller
             'days' => 'nullable|integer|min:1|max:3650',
         ]);
         $days = (int) ($data['days'] ?? 30); // Formularwerte kommen als Text, Carbon 3 verlangt eine Zahl
+        // Sich selbst sperren/entsperren oder die eigenen Admin-Rechte entfernen geht nicht
+        if ($user->id === $request->user()->id && in_array($data['action'], ['ban', 'unban', 'remove_admin'], true)) {
+            return back()->with('status', 'Das geht nicht beim eigenen Account.');
+        }
         match ($data['action']) {
             'add_vip' => $user->forceFill(['vip_until' => ($user->isVip() ? $user->vip_until : now())->copy()->addDays($days)])->save(),
             'remove_vip' => $user->forceFill(['vip_until' => null])->save(),
             'ban' => $user->forceFill(['is_banned' => true])->save(),
             'unban' => $user->forceFill(['is_banned' => false])->save(),
             'make_admin' => $user->forceFill(['is_admin' => true])->save(),
-            'remove_admin' => $user->id === $request->user()->id ? null : $user->forceFill(['is_admin' => false])->save(),
+            'remove_admin' => $user->forceFill(['is_admin' => false])->save(),
         };
         return back();
     }
@@ -78,11 +82,12 @@ class AdminController extends Controller
 
     public function storeGroup(Request $request)
     {
+        $request->merge(['name' => trim((string) $request->input('name'))]);
         $data = $request->validate([
-            'name' => 'required|string|max:255|unique:newsgroups,name',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[A-Za-z0-9][A-Za-z0-9.+_\-]*$/', 'unique:newsgroups,name'],
             'backfill_days' => 'nullable|integer|min:0|max:5000',
-        ]);
-        Newsgroup::create(['name' => trim($data['name']), 'backfill_days' => self::days($data['backfill_days'] ?? null)]);
+        ], ['name.regex' => 'Nur ein Gruppenname wie alt.binaries.example (Buchstaben, Ziffern, . + _ -), ohne Leerzeichen oder Zeilenumbruch.']);
+        Newsgroup::create(['name' => $data['name'], 'backfill_days' => self::days($data['backfill_days'] ?? null)]);
         return back();
     }
 

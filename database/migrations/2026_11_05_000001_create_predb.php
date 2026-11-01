@@ -27,7 +27,10 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('releases', fn (Blueprint $t) => $t->dropColumn(['pre_id', 'pre_checked_at']));
+        Schema::table('releases', function (Blueprint $t) {
+            $t->dropIndex(['pre_id']);
+            $t->dropColumn(['pre_id', 'pre_checked_at']);
+        });
         Schema::dropIfExists('predb');
     }
 };

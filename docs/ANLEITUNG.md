@@ -258,10 +258,9 @@ Eigene Dateien gehen auch: `indexer:pre-import /pfad/datei.csv.gz` (nZEDb-Format
 
 Vorhandene Releases nachträglich verknüpfen (z.B. nach dem ersten Tag): `sudo -u www-data php artisan indexer:pre-match`
 
-**Von Hand nachrüsten** (nur nötig ohne `update.sh`; `install.sh` und `update.sh` machen das selbst):
+**Von Hand nachrüsten** (nur nötig ohne `update.sh`; `install.sh` und `update.sh` machen das selbst; der Zeitplan für `indexer:pre-fetch` steht schon in `routes/indexer-schedule.php`):
 
     cd /var/www/indexer && php artisan migrate --force
-    echo "\Illuminate\Support\Facades\Schedule::command('indexer:pre-fetch')->everyFiveMinutes()->withoutOverlapping();" >> routes/console.php
     cat > /etc/systemd/system/drstr4nge-pre.service <<'UNIT'
     [Unit]
     Description=DrStr4nge Indexer: Pre-Daten aus IRC
@@ -305,7 +304,16 @@ bei MEGA muss dafür aus sein. Das Passwort steht nur verschleiert in `storage/r
 
     tar -xf drstr4nge-backup-DATUM.tar                    # ergibt datenbank.sql.gz, env, branding/
     gunzip -c datenbank.sql.gz | mysql -u root indexer    # Datenbank zurückspielen
-    cp env /var/www/indexer/.env                          # nur bei neuem Server (enthält den APP_KEY)
+
+Auf dem gleichen Server reicht das. **Auf einem neuen Server** (vorher mit `install.sh` eingerichtet) nicht die ganze `env`
+kopieren: sie enthält das Datenbank-Passwort des alten Servers, der neue hat ein anderes. Nur den `APP_KEY` übernehmen (ohne ihn
+sind gespeicherte Passwörter und 2FA nicht lesbar), danach Logo und Zwischenspeicher:
+
+    sudo sed -i "s|^APP_KEY=.*|$(grep '^APP_KEY=' env)|" /var/www/indexer/.env
+    sudo cp -a branding /var/www/indexer/storage/app/public/ && sudo chown -R www-data:www-data /var/www/indexer/storage/app/public/branding
+    cd /var/www/indexer && sudo -u www-data php artisan config:clear && sudo -u www-data php artisan config:cache
+
+Weitere eigene Werte aus der alten `env` (z.B. Usenet, TMDB, Mail) bei Bedarf von Hand übertragen oder im Admin unter Zugangsdaten eintragen.
 
 ## Überwachung, Warn-Mails und Log
 `indexer:health` prüft alle 15 Minuten: Findet der Crawler seit 6 Stunden nichts (`ALERT_CRAWL_HOURS`)? Ist der IRC-Scraper seit

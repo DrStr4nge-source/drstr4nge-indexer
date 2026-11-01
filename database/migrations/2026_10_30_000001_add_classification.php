@@ -26,6 +26,11 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists('blacklist_rules');
-        Schema::table('releases', fn (Blueprint $t) => $t->dropColumn(['category_id', 'status', 'obfuscated', 'inspected', 'locked', 'files_expected']));
+        Schema::table('releases', function (Blueprint $t) {
+            $t->dropIndex(['category_id']);
+            $t->dropIndex(['status']);
+            $t->dropIndex(['inspected']);
+            $t->dropColumn(['category_id', 'status', 'obfuscated', 'inspected', 'locked', 'files_expected']);
+        });
     }
 };

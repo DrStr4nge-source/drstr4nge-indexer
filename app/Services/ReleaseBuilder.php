@@ -9,10 +9,14 @@ use Carbon\Carbon;
 /** Macht aus XOVER-Zeilen Releases, erkennt Kategorie, Spam, Passwort-Hinweise und verschleierte Namen. */
 class ReleaseBuilder
 {
+    /** @var array<string,bool> offene verschleierte Releases (guid => noch nicht vollständig), pro ingest() */
+    private array $openObf = [];
+
     public function ingest(Newsgroup $group, array $rows): int
     {
         Blacklist::flush();
         $acc = [];
+        $this->openObf = [];
         foreach ($rows as $r) {
             if (count($r) < 7 || !($p = SubjectParser::parse((string) $r[1]))) {
                 continue;
@@ -33,8 +37,9 @@ class ReleaseBuilder
                 $anon = false;
                 $expected = 0; // (x/y) zählt hier alle Dateien des Posts, nicht nur dieses Releases
             } elseif ($expected > 0) {
-                // Verschleierter Post: alle Dateien eines Releases teilen Poster, Dateianzahl und Stunde
-                $guid = sha1($group->id . '|' . $poster . '|obf|' . $expected . '|' . gmdate('YmdH', $posted));
+                // Verschleierter Post: alle Dateien eines Releases teilen Poster, Dateianzahl und Stunde.
+                // Läuft der Upload über einen Stundenwechsel, gehört er zum noch offenen Release der Stunden davor.
+                $guid = $this->obfGuid($acc, $group->id . '|' . $poster . '|obf|' . $expected . '|', $posted, $expected);
                 $name = $p['fileBase'] ?: $p['file'];
                 $anon = true;
             } else {
@@ -89,7 +94,8 @@ class ReleaseBuilder
                 'completion' => $total ? min(100, (int) floor($have / $total * 100)) : 0,
                 'files' => $files,
                 'files_expected' => $expected ?: null,
-                'posted_at' => Carbon::createFromTimestamp($d['posted']),
+                // Neuestes Datum aller Teile, nie rückwärts (älterer Block) und nie in der Zukunft (falscher Date-Header)
+                'posted_at' => Carbon::createFromTimestamp(min(time(), max($d['posted'], $isNew ? 0 : (int) $rel->posted_at?->timestamp))),
             ]);
 
             if (!$rel->inspected) {
@@ -123,5 +129,33 @@ class ReleaseBuilder
         );
         // Ein bei der Prüfung gefundenes "passworded" nicht durch spätere Batches zurücksetzen
         $rel->status = ($new === 'ok' && $rel->inspected) ? $rel->status : $new;
+    }
+
+    /**
+     * GUID eines verschleierten Posts. Gibt es in den 6 Stunden davor ein noch unvollständiges Release mit gleichem
+     * Poster und gleicher Dateianzahl (in diesem Block oder in der Datenbank), wird es weitergeführt. So wird ein
+     * Upload über einen Stundenwechsel nicht in zwei halbe Releases geteilt. Ein vollständiges Release wird nicht
+     * fortgesetzt: der nächste Upload desselben Posters bekommt ein eigenes.
+     */
+    private function obfGuid(array $acc, string $base, int $posted, int $expected): string
+    {
+        $own = sha1($base . gmdate('YmdH', $posted));
+        if (isset($acc[$own])) {
+            return $own;
+        }
+        for ($h = 1; $h <= 6; $h++) {
+            $g = sha1($base . gmdate('YmdH', $posted - $h * 3600));
+            if (isset($acc[$g])) {
+                if (count($acc[$g]['files'] ?? []) < $expected) {
+                    return $g;
+                }
+                continue;
+            }
+            $this->openObf[$g] ??= Release::where('guid', $g)->where('completion', '<', 100)->exists();
+            if ($this->openObf[$g]) {
+                return $g;
+            }
+        }
+        return $own;
     }
 }

@@ -23,7 +23,9 @@ class Recategorize extends Command
         Release::chunkById(500, function ($chunk) use ($builder, &$n) {
             foreach ($chunk as $rel) {
                 if (!$rel->inspected) {
-                    $rel->obfuscated = \App\Services\Obfuscation::looks($rel->name);
+                    // Neu bewerten, aber "kein brauchbarer Name" (z.B. "1" aus einem verschleierten Post) bleibt verschleiert
+                    $rel->obfuscated = \App\Services\Obfuscation::looks($rel->name)
+                        || ($rel->obfuscated && !\App\Services\SubjectParser::meaningful($rel->name));
                 }
                 $builder->classify($rel);
                 $rel->save();

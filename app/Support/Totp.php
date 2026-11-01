@@ -35,10 +35,11 @@ class Totp
         return null;
     }
 
-    public static function uri(string $secret, string $account, string $issuer): string
+    /** otpauth-URI für die App. SHA1, 6 Stellen, 30 s sind Standard und werden weggelassen (kürzerer QR-Code). */
+    public static function uri(string $secret, string $account, string $issuer, bool $issuerInLabel = true): string
     {
-        $label = rawurlencode($issuer) . ':' . rawurlencode($account);
-        return "otpauth://totp/$label?secret=$secret&issuer=" . rawurlencode($issuer) . '&algorithm=SHA1&digits=6&period=30';
+        $label = ($issuerInLabel ? rawurlencode($issuer) . ':' : '') . rawurlencode($account);
+        return "otpauth://totp/$label?secret=$secret&issuer=" . rawurlencode($issuer);
     }
 
     private static function at(string $secret, int $step, int $digits = 6): string

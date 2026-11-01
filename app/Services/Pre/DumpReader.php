@@ -49,7 +49,9 @@ class DumpReader
     {
         $v = str_getcsv($line, $sep);
         if (count($v) < 2) return null;
-        $r = array_combine(array_slice($header, 0, count($v)), array_slice(array_pad($v, count($header), null), 0, count($v)));
+        // Kurze Zeilen bekommen leere Felder, überzählige Felder (z.B. Komma im Grund ohne Anführungszeichen) fallen weg
+        $v = array_slice(array_pad($v, count($header), null), 0, count($header));
+        $r = array_combine($header, $v);
         $get = function (array $keys) use ($r) { foreach ($keys as $k) if (isset($r[$k]) && $r[$k] !== '') return $r[$k]; return null; };
         $nuked = $get(['nuked', 'nuke', 'status']);
         return self::make($get(['title', 'release', 'name', 'rlsname']), $get(['predate', 'pretime', 'time', 'date', 'created']), $get(['size']),

@@ -46,7 +46,11 @@ class Nntp
     /** @return array<int,array> Zeilen: [nr, subject, from, date, msgid, refs, bytes, lines] */
     public function xover(int $from, int $to): array
     {
-        $this->expect($this->cmd("XOVER $from-$to"), [224]);
+        $r = $this->cmd("XOVER $from-$to");
+        if (in_array($this->code((string) $r), [420, 423], true)) {
+            return []; // keine Artikel in diesem Bereich (Lücke in der Gruppe): weiterlesen statt hängen bleiben
+        }
+        $this->expect($r, [224]);
         $rows = [];
         while (true) {
             // Bricht die Verbindung mitten in der Liste ab, wirft readLine(). So wird nie ein halber Block gespeichert.
@@ -96,6 +100,7 @@ class Nntp
 
     private function cmd(string $line): string
     {
+        $line = str_replace(["\r", "\n", "\0"], '', $line); // nie zwei Befehle in einer Zeile
         if (!$this->sock || @fwrite($this->sock, $line . "\r\n") === false) {
             throw new NntpConnectionLost('Verbindung zum Usenet-Server getrennt (beim Senden)');
         }

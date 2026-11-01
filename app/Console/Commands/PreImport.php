@@ -61,6 +61,16 @@ class PreImport extends Command
     {
         $api = fn (string $path) => Http::timeout(30)->withUserAgent('DrStr4nge-Indexer')->acceptJson()
             ->get('https://api.github.com/repos/' . self::REPO . '/contents/' . $path);
+        try {
+            return $this->githubList($api, $since);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            $this->error('GitHub nicht erreichbar: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    private function githubList(callable $api, ?int $since): bool
+    {
         $root = $api('dumps');
         if (!$root->successful()) {
             $this->error('GitHub antwortet mit HTTP ' . $root->status() . ($root->status() === 403 ? ' (Abfrage-Limit, in einer Stunde erneut)' : ''));
@@ -94,8 +104,18 @@ class PreImport extends Command
 
     private function importUrl(string $url, ?int $since, string $prefix = ''): bool
     {
-        $tmp = tempnam(sys_get_temp_dir(), 'predb') . (str_ends_with($url, '.gz') ? '.gz' : '');
-        $res = Http::timeout(120)->retry(3, 3000, throw: false)->withUserAgent('DrStr4nge-Indexer')->sink($tmp)->get($url);
+        $base = tempnam(sys_get_temp_dir(), 'predb');
+        $tmp = $base . (str_ends_with($url, '.gz') ? '.gz' : '');
+        if ($tmp !== $base) {
+            @unlink($base); // tempnam legt die Datei schon an; wir nutzen den Namen mit .gz
+        }
+        try {
+            $res = Http::timeout(120)->retry(3, 3000, throw: false)->withUserAgent('DrStr4nge-Indexer')->sink($tmp)->get($url);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            @unlink($tmp);
+            $this->error($prefix . basename((string) parse_url($url, PHP_URL_PATH)) . ': nicht erreichbar (' . $e->getMessage() . ')');
+            return false;
+        }
         if (!$res->successful()) {
             @unlink($tmp);
             $this->error($prefix . basename(parse_url($url, PHP_URL_PATH)) . ': HTTP ' . $res->status());

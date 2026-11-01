@@ -16,6 +16,9 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('media', fn (Blueprint $t) => $t->dropColumn(['genres', 'director', 'actors', 'details_at']));
+        Schema::table('media', function (Blueprint $t) {
+            $t->dropIndex(['details_at']);
+            $t->dropColumn(['genres', 'director', 'actors', 'details_at']);
+        });
     }
 };

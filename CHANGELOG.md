@@ -2,6 +2,37 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.16.0] – 2026-11-01
+
+Ergebnis einer Fehlersuche über den ganzen Code.
+
+### Behoben (wichtig)
+- PreDB-Umbenennung konnte ein verschleiertes Release falsch benennen, wenn mehr als 50 Pres in Frage kamen. Die Dateianzahl wird jetzt schon in der Abfrage geprüft, mehr als 50 Treffer gelten als nicht eindeutig.
+- Verschleierte Uploads, die über einen Stundenwechsel laufen, wurden in zwei halbe Releases geteilt (nie sichtbar, nach 2 Tagen gelöscht). Sie werden jetzt im noch offenen Release fortgesetzt.
+- Crawler blieb dauerhaft an einer Lücke in einer Gruppe hängen, wenn der Usenet-Server einen leeren Bereich mit 423/420 meldet. Die Lücke wird jetzt übersprungen.
+
+### Behoben
+- 2FA-Einrichtung brach bei langem Seitennamen oder langer E-Mail mit Fehler 500 ab. Kürzerer QR-Code, notfalls nur der Schlüssel zum Abtippen.
+- Steuerzeichen in Release-Namen machten API- und RSS-Antworten ungültig. Sie werden beim Crawlen entfernt und in API/RSS korrekt behandelt.
+- API-Suche warf Fehler 500 bei Releases ohne Datum.
+- `indexer:recategorize` machte Releases mit unbrauchbarem Namen (z.B. "1") sichtbar.
+- Das Datum eines Releases konnte rückwärts springen oder in der Zukunft liegen.
+- Gesperrte Accounts werden jetzt überall abgemeldet. Gesperrte Admins kommen nicht mehr in den Admin-Bereich, sich selbst sperren/entsperren geht nicht.
+- Übernahme einer hängenden Crawler-Sperre war nicht atomar (zwei Crawls gleichzeitig möglich).
+- Netzwerk-Timeouts beendeten `indexer:pre-fetch`, `indexer:tvmaze` und `indexer:pre-import` (bei `--nzedb` fehlten alle folgenden Dumps).
+- Eine CSV-Zeile mit zu vielen Feldern beendete den ganzen Dump-Import.
+- Leere Temp-Dateien blieben beim Import von .gz-Dumps in /tmp liegen.
+- Zwei Sicherungen gleichzeitig (z.B. Doppelklick auf "Jetzt sichern") störten sich. Jetzt läuft immer nur eine.
+- Warn-Mails kamen bei pendelnden Werten (z.B. Festplatte genau an der Schwelle) alle 15 Minuten statt höchstens alle 12 Stunden.
+- Gruppennamen und IRC-Einstellungen mit Zeilenumbruch werden abgelehnt; NNTP- und IRC-Befehle entfernen Zeilenumbrüche.
+- Nach einem APP_KEY-Wechsel überdeckten nicht mehr lesbare Admin-Passwörter die Werte aus der `.env`.
+- Leerzeichen am Rand von Passwörtern (Usenet, Mail, MEGA, IRC) werden nicht mehr abgeschnitten.
+- Gleichzeitige Downloads konnten das Tageslimit überschreiten.
+- VIP-Kauf mit manipulierter Adresse warf Fehler 500.
+- Log-Seite im Admin warf Fehler 500 bei manipulierten Parametern.
+- Migrationen ließen sich auf SQLite nicht zurückrollen.
+- Anleitung: Wiederherstellen auf einem neuen Server übernimmt nur noch den `APP_KEY` (nicht das alte Datenbank-Passwort); doppelter Zeitplan-Eintrag für `indexer:pre-fetch` entfernt.
+
 ## [1.15.1] – 2026-11-01
 
 ### Behoben

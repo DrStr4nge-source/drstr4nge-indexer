@@ -12,8 +12,9 @@ class LogController extends Controller
 
     public function index(Request $request)
     {
-        $filter = array_key_exists($request->query('stufe'), self::FILTERS) ? $request->query('stufe') : 'probleme';
-        $q = trim((string) $request->query('q'));
+        $stufe = $request->query('stufe');
+        $filter = is_string($stufe) && array_key_exists($stufe, self::FILTERS) ? $stufe : 'probleme';
+        $q = is_string($request->query('q')) ? trim($request->query('q')) : '';
         $files = LogReader::files(storage_path('logs'));
         return view('admin.log', [
             'entries' => LogReader::entries($files, self::FILTERS[$filter], 300, 4 * 1024 * 1024, mb_substr($q, 0, 100)),

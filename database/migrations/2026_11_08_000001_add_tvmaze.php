@@ -14,6 +14,9 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('media', fn (Blueprint $t) => $t->dropColumn(['tvmaze_id', 'tvmaze_checked_at']));
+        Schema::table('media', function (Blueprint $t) {
+            $t->dropIndex(['tvmaze_id']);
+            $t->dropColumn(['tvmaze_id', 'tvmaze_checked_at']);
+        });
     }
 };

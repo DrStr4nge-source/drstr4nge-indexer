@@ -164,6 +164,7 @@ class IrcClient
 
     private function send(string $line): void
     {
+        $line = str_replace(["\r", "\n", "\0"], '', $line); // Zeilenumbruch aus Einstellungen darf keinen zweiten IRC-Befehl ergeben
         if (!$this->sock || @fwrite($this->sock, $line . "\r\n") === false) {
             throw new \RuntimeException('Verbindung zum IRC-Server getrennt (beim Senden)');
         }

@@ -43,4 +43,12 @@ class DumpReaderTest extends TestCase
         $this->assertSame('bad.ar', $r[1]['nuke_reason']);
         $this->assertSame('TV', $r[1]['category']);
     }
+
+    public function test_csv_zeile_mit_zu_vielen_feldern_bricht_nicht_ab(): void
+    {
+        // Komma im Grund ohne Anführungszeichen: ein Feld mehr als im Kopf
+        $r = $this->rows("title,predate,size,reason\nA.Movie.2020-XYZ,2021-01-01 00:00:00,700,dupe, older\nB.Show.S01E01-TV,2021-01-02 00:00:00,350,\n");
+        $this->assertCount(2, $r);
+        $this->assertSame('B.Show.S01E01-TV', $r[1]['title']);
+    }
 }

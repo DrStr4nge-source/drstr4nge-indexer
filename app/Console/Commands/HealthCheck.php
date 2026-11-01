@@ -55,29 +55,48 @@ class HealthCheck extends Command
         ], config('indexer.alerts'));
         Cache::forever('health.problems', $problems);
 
-        $sent = Cache::get('health.sent', []); // schlüssel => Zeitpunkt der letzten Mail
-        $repeat = (int) config('indexer.alerts.repeat_hours') * 3600;
-        $new = array_filter($problems, fn ($k) => !isset($sent[$k]) || $now - $sent[$k] > $repeat, ARRAY_FILTER_USE_KEY);
-        $fixed = array_diff_key($sent, $problems);
-
-        foreach ($new as $t) {
-            \Illuminate\Support\Facades\Log::warning('Überwachung: ' . $t);
+        // Pro Warnung: at = letzte Problem-Mail, open = Problem besteht, notified = für dieses Auftreten wurde gemailt.
+        // Höchstens eine Problem-Mail pro repeat_hours, auch wenn ein Wert ständig um die Schwelle pendelt. "Wieder in
+        // Ordnung" nur, wenn vorher für dieses Auftreten eine Problem-Mail ging.
+        $sent = [];
+        foreach ((array) Cache::get('health.sent', []) as $k => $v) {
+            $sent[$k] = is_array($v) ? $v : ['at' => (int) $v, 'open' => true, 'notified' => true]; // altes Format: nur Zeitpunkt
         }
+        $repeat = (int) config('indexer.alerts.repeat_hours') * 3600;
+        $new = [];
+        foreach ($problems as $k => $t) {
+            $st = $sent[$k] ?? ['at' => 0, 'open' => false, 'notified' => false];
+            if (!$st['open']) {
+                \Illuminate\Support\Facades\Log::warning('Überwachung: ' . $t);
+            }
+            if ($now - $st['at'] > $repeat) {
+                $new[$k] = $t;
+            }
+            $sent[$k] = ['at' => $st['at'], 'open' => true, 'notified' => $st['open'] && $st['notified']];
+        }
+        $fixed = array_filter($sent, fn ($st, $k) => $st['open'] && !isset($problems[$k]), ARRAY_FILTER_USE_BOTH);
         if ($fixed) {
             \Illuminate\Support\Facades\Log::info('Überwachung: wieder in Ordnung: ' . implode(', ', array_keys($fixed)));
         }
         if ($to && $new) {
             $this->send($to, count($new) === 1 ? 'Problem' : count($new) . ' Probleme', implode("\n\n", array_map(fn ($t) => "- $t", $new)));
             foreach ($new as $k => $_) {
-                $sent[$k] = $now;
+                $sent[$k]['at'] = $now;
+                $sent[$k]['notified'] = true;
             }
         }
-        if ($to && $fixed) {
+        $notify = array_filter($fixed, fn ($st) => $st['notified']);
+        if ($to && $notify) {
             $names = ['crawl' => 'Crawler', 'irc' => 'IRC-Pre-Scraper', 'disk' => 'Festplatte', 'backup' => 'Sicherung'];
-            $this->send($to, 'Wieder in Ordnung', 'Wieder in Ordnung: ' . implode(', ', array_map(fn ($k) => $names[$k] ?? $k, array_keys($fixed))) . '.');
+            $this->send($to, 'Wieder in Ordnung', 'Wieder in Ordnung: ' . implode(', ', array_map(fn ($k) => $names[$k] ?? $k, array_keys($notify))) . '.');
         }
-        foreach ($fixed as $k => $_) {
-            unset($sent[$k]);
+        foreach ($sent as $k => $st) {
+            if (isset($fixed[$k])) {
+                $sent[$k] = ['at' => $st['at'], 'open' => false, 'notified' => false];
+            }
+            if (!$sent[$k]['open'] && $now - $sent[$k]['at'] > $repeat) {
+                unset($sent[$k]); // alt und erledigt
+            }
         }
         Cache::forever('health.sent', $sent);
 

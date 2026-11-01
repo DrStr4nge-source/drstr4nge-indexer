@@ -16,7 +16,7 @@ class TwoFactorController extends Controller
     {
         $user = $request->user();
         $pending = $request->session()->get('2fa_pending');
-        $qr = $pending ? QrCode::svg(Totp::uri($pending, $user->email, Brand::name()), 5) : null;
+        $qr = $pending ? self::qr($pending, $user->email, Brand::name()) : null;
         return view('admin.two-factor', [
             'enabled' => $user->hasTwoFactor(),
             'pending' => $pending,
@@ -24,6 +24,19 @@ class TwoFactorController extends Controller
             'codes' => session('2fa_codes'),
             'remaining' => count((array) $user->two_factor_recovery_codes),
         ]);
+    }
+
+    /** QR-Code für die App. Langer Seitenname oder lange E-Mail: kürzere Form, notfalls null (dann Schlüssel von Hand). */
+    private static function qr(string $secret, string $email, string $issuer): ?string
+    {
+        foreach ([Totp::uri($secret, $email, $issuer), Totp::uri($secret, $email, $issuer, false), Totp::uri($secret, $email, mb_substr($issuer, 0, 20), false)] as $uri) {
+            try {
+                return QrCode::svg($uri, 5);
+            } catch (\InvalidArgumentException) {
+                // zu lang für den QR-Code, nächste kürzere Form
+            }
+        }
+        return null;
     }
 
     public function start(Request $request)

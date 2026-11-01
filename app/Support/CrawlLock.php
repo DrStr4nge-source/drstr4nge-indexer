@@ -45,7 +45,22 @@ class CrawlLock
             if ($cur && self::alive((int) ($cur['pid'] ?? 0))) {
                 return null; // läuft wirklich noch
             }
-            Cache::forget($key); // Prozess tot (Absturz, kill, Neustart): Sperre übernehmen
+            // Prozess tot (Absturz, kill, Neustart): Sperre übernehmen. Unter einer kurzen Sperre noch einmal lesen und nur
+            // löschen, wenn noch derselbe tote Eintrag drinsteht. Sonst könnte ein zweiter Start die frische Sperre eines
+            // anderen Prozesses löschen, der gerade übernommen hat.
+            $guard = Cache::lock("$key.takeover", 10);
+            if (!$guard->block(5)) {
+                return null;
+            }
+            try {
+                $now = Cache::get($key);
+                if ($now && $now != $cur) {
+                    continue; // inzwischen von einem anderen übernommen: neu prüfen
+                }
+                Cache::forget($key);
+            } finally {
+                $guard->release();
+            }
         }
         return null;
     }

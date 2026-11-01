@@ -18,13 +18,13 @@ class SubjectParser
     private const GENERIC = ['description', 'desc', 'yenc', 'upload', 'uploads', 'post', 'posts', 'file', 'files', 'datei', 'dateien',
         'rar', 'par2', 'nzb', 'misc', 'new', 'test', 'part', 'sample', 'archive', 'archiv', 'backup'];
 
-    /** Ungültiges UTF-8 (meist Latin-1/Windows-1252) in UTF-8 umwandeln, damit die Datenbank es speichern kann. */
+    /** Ungültiges UTF-8 (meist Latin-1/Windows-1252) in UTF-8 umwandeln, damit die Datenbank es speichern kann. Steuerzeichen entfernen. */
     public static function utf8(string $s): string
     {
-        if (mb_check_encoding($s, 'UTF-8')) {
-            return $s;
+        if (!mb_check_encoding($s, 'UTF-8')) {
+            $s = mb_convert_encoding($s, 'UTF-8', 'Windows-1252');
         }
-        return mb_convert_encoding($s, 'UTF-8', 'Windows-1252');
+        return preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $s) ?? $s;
     }
 
     /**

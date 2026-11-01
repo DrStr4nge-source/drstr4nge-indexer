@@ -53,12 +53,14 @@ class PreController extends Controller
             'irc_server' => ['required', 'string', 'max:255', 'regex:/^[A-Za-z0-9.\-]+$/'],
             'irc_port' => 'required|integer|min:1|max:65535',
             'irc_nick' => ['required', 'string', 'max:30', 'regex:/^[A-Za-z\[\]\\`_^{|}][A-Za-z0-9\[\]\\`_^{|}\-]*$/'],
-            'irc_realname' => 'nullable|string|max:60',
+            'irc_realname' => ['nullable', 'string', 'max:60', 'not_regex:/[\x00-\x1F\x7F]/'],
             'irc_channels' => 'required|string|max:1000',
-            'irc_password' => 'nullable|string|max:255',
+            'irc_password' => ['nullable', 'string', 'max:255', 'not_regex:/[\x00-\x1F\x7F]/'],
             'remove_password' => 'nullable|boolean',
         ], [
             'irc_server.regex' => 'Nur Servername oder IP, ohne Port und ohne "irc://".',
+            'irc_realname.not_regex' => 'Keine Zeilenumbrüche oder Steuerzeichen.',
+            'irc_password.not_regex' => 'Keine Zeilenumbrüche oder Steuerzeichen.',
             'irc_nick.regex' => 'Nick: Buchstaben, Ziffern und _ - [ ] { } | ^ `, kein Leerzeichen, nicht mit Ziffer beginnen.',
         ]);
         $channels = IrcSettings::channels($data['irc_channels']);

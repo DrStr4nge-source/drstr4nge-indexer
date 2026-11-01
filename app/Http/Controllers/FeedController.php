@@ -33,15 +33,15 @@ class FeedController extends Controller
         $site = \App\Support\Brand::name();
         $items = '';
         foreach ($q->get() as $r) {
-            $url = e(url('/api') . '?t=get&id=' . $r->guid . '&apikey=' . $user->api_key);
-            $items .= '<item><title>' . e($r->name) . '</title><guid isPermaLink="false">' . $r->guid . '</guid>'
+            $url = \App\Support\Xml::esc(url('/api') . '?t=get&id=' . $r->guid . '&apikey=' . $user->api_key);
+            $items .= '<item><title>' . \App\Support\Xml::esc($r->name) . '</title><guid isPermaLink="false">' . $r->guid . '</guid>'
                 . '<link>' . $url . '</link><pubDate>' . ($r->posted_at ?? $r->created_at)->toRssString() . '</pubDate>'
-                . '<category>' . e(Categories::name($r->category_id)) . '</category>'
-                . ($r->media ? '<description>' . e($r->media->title . ($r->media->year ? " ({$r->media->year})" : '')) . '</description>' : '')
+                . '<category>' . \App\Support\Xml::esc(Categories::name($r->category_id)) . '</category>'
+                . ($r->media ? '<description>' . \App\Support\Xml::esc($r->media->title . ($r->media->year ? " ({$r->media->year})" : '')) . '</description>' : '')
                 . '<enclosure url="' . $url . '" length="' . (int) $r->size . '" type="application/x-nzb"/></item>';
         }
-        $xml = '<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>' . e($site . ($watch ? ' – Merkliste' : '')) . '</title>'
-            . '<link>' . e(url('/')) . '</link><description>' . e($site) . '</description><language>de-de</language>' . $items . '</channel></rss>';
+        $xml = '<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>' . \App\Support\Xml::esc($site . ($watch ? ' – Merkliste' : '')) . '</title>'
+            . '<link>' . \App\Support\Xml::esc(url('/')) . '</link><description>' . \App\Support\Xml::esc($site) . '</description><language>de-de</language>' . $items . '</channel></rss>';
         return response($xml, 200)->header('Content-Type', 'application/rss+xml; charset=UTF-8');
     }
 }

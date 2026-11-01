@@ -85,15 +85,15 @@ class NewznabController extends Controller
         $items = '';
         foreach ($rows as $r) {
             $m = $r->media;
-            $meta = $m ? ($m->imdb_id ? '<newznab:attr name="imdb" value="' . e(substr($m->imdb_id, 2)) . '"/>' : '')
+            $meta = $m ? ($m->imdb_id ? '<newznab:attr name="imdb" value="' . \App\Support\Xml::esc(substr($m->imdb_id, 2)) . '"/>' : '')
                 . ($m->tmdb_id ? '<newznab:attr name="tmdbid" value="' . $m->tmdb_id . '"/>' : '')
                 . ($m->tvdb_id ? '<newznab:attr name="tvdbid" value="' . $m->tvdb_id . '"/>' : '')
                 . ($m->tvmaze_id ? '<newznab:attr name="tvmazeid" value="' . $m->tvmaze_id . '"/>' : '')
-                . ($m->coverUrl() ? '<newznab:attr name="coverurl" value="' . e($m->coverUrl()) . '"/>' : '') : '';
-            $url = e(url('/api') . '?t=get&id=' . $r->guid . '&apikey=' . $user->api_key);
-            $items .= '<item><title>' . e($r->name) . '</title><guid isPermaLink="false">' . $r->guid . '</guid>'
-                . '<link>' . $url . '</link><pubDate>' . $r->posted_at->toRssString() . '</pubDate>'
-                . '<category>' . e(Categories::name($r->category_id)) . '</category>'
+                . ($m->coverUrl() ? '<newznab:attr name="coverurl" value="' . \App\Support\Xml::esc($m->coverUrl()) . '"/>' : '') : '';
+            $url = \App\Support\Xml::esc(url('/api') . '?t=get&id=' . $r->guid . '&apikey=' . $user->api_key);
+            $items .= '<item><title>' . \App\Support\Xml::esc($r->name) . '</title><guid isPermaLink="false">' . $r->guid . '</guid>'
+                . '<link>' . $url . '</link><pubDate>' . ($r->posted_at ?? $r->created_at)->toRssString() . '</pubDate>'
+                . '<category>' . \App\Support\Xml::esc(Categories::name($r->category_id)) . '</category>'
                 . '<enclosure url="' . $url . '" length="' . $r->size . '" type="application/x-nzb"/>'
                 . '<newznab:attr name="category" value="' . Categories::parent($r->category_id) . '"/>'
                 . ($r->category_id !== Categories::parent($r->category_id) ? '<newznab:attr name="category" value="' . $r->category_id . '"/>' : '')
@@ -101,7 +101,7 @@ class NewznabController extends Controller
                 . '<newznab:attr name="size" value="' . $r->size . '"/></item>';
         }
         return '<rss version="2.0" xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/"><channel>'
-            . '<title>' . e(config('app.name')) . '</title>'
+            . '<title>' . \App\Support\Xml::esc(config('app.name')) . '</title>'
             . '<newznab:response offset="' . $offset . '" total="' . $total . '"/>' . $items . '</channel></rss>';
     }
 
@@ -112,15 +112,15 @@ class NewznabController extends Controller
             if ($parent !== null) {
                 continue;
             }
-            $cats .= '<category id="' . $id . '" name="' . e($name) . '">';
+            $cats .= '<category id="' . $id . '" name="' . \App\Support\Xml::esc($name) . '">';
             foreach (config('indexer.categories') as $sid => [$sname, $sparent]) {
                 if ($sparent === $id) {
-                    $cats .= '<subcat id="' . $sid . '" name="' . e(substr(strrchr($sname, '/'), 1)) . '"/>';
+                    $cats .= '<subcat id="' . $sid . '" name="' . \App\Support\Xml::esc(substr(strrchr($sname, '/'), 1)) . '"/>';
                 }
             }
             $cats .= '</category>';
         }
-        return '<caps><server title="' . e(config('app.name')) . '"/><limits max="100" default="50"/><searching>'
+        return '<caps><server title="' . \App\Support\Xml::esc(config('app.name')) . '"/><limits max="100" default="50"/><searching>'
             . '<search available="yes" supportedParams="q"/>'
             . '<tv-search available="yes" supportedParams="q,season,ep,tvdbid,tvmazeid,tmdbid,imdbid"/>'
             . '<movie-search available="yes" supportedParams="q,imdbid,tmdbid"/>'

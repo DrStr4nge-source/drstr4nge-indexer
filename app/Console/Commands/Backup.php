@@ -22,18 +22,41 @@ class Backup extends Command
             $this->info('Sicherung ist aus (BACKUP_ENABLED=false).');
             return self::SUCCESS;
         }
+        // Nur eine Sicherung gleichzeitig (z.B. Doppelklick auf "Jetzt sichern" oder Cronjob plus Handstart)
+        $lock = \Illuminate\Support\Facades\Cache::lock('indexer-backup', 4 * 3600);
+        if (!$lock->get()) {
+            $this->warn('Es läuft schon eine Sicherung.');
+            return self::SUCCESS;
+        }
+        try {
+            return $this->backup($c);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function backup(array $c): int
+    {
         $dir = rtrim($c['path'], '/');
         if (!is_dir($dir) && !@mkdir($dir, 0700, true)) {
             return $this->fail2("Ordner $dir lässt sich nicht anlegen");
         }
         @chmod($dir, 0700);
         $stamp = date('Ymd-His');
-        $work = "$dir/.tmp-$stamp";
-        mkdir($work, 0700);
+        $work = "$dir/.tmp-$stamp-" . bin2hex(random_bytes(4));
+        if (!@mkdir($work, 0700)) {
+            return $this->fail2("Arbeitsordner $work lässt sich nicht anlegen");
+        }
         $target = "$dir/drstr4nge-backup-$stamp.tar";
-        for ($n = 2; file_exists($target); $n++) { // nie eine vorhandene Sicherung überschreiben
+        // Nie eine vorhandene Sicherung überschreiben: Dateinamen exklusiv reservieren (auch bei zwei Läufen in derselben Sekunde)
+        for ($n = 2; !($fh = @fopen($target, 'x')); $n++) {
+            if ($n > 100) {
+                @rmdir($work);
+                return $this->fail2("Sicherungsdatei in $dir lässt sich nicht anlegen");
+            }
             $target = "$dir/drstr4nge-backup-$stamp-$n.tar";
         }
+        fclose($fh);
 
         try {
             // 1) Datenbank

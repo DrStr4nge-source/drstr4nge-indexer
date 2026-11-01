@@ -47,7 +47,11 @@ class TvMaze
 
     private static function get(string $path, array $q): ?array
     {
-        $res = Http::timeout(15)->withUserAgent('DrStr4nge-Indexer/' . config('indexer.version'))->acceptJson()->get(self::BASE . $path, $q);
+        try {
+            $res = Http::timeout(15)->withUserAgent('DrStr4nge-Indexer/' . config('indexer.version'))->acceptJson()->get(self::BASE . $path, $q);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            throw new \RuntimeException('TVmaze nicht erreichbar: ' . $e->getMessage(), 0, $e);
+        }
         if ($res->status() === 404) {
             return null;
         }

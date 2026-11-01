@@ -8,8 +8,12 @@ class PreRss
 {
     public static function fetch(string $url): array
     {
-        $res = Http::timeout(20)->retry(2, 2000, throw: false)
-            ->withUserAgent('DrStr4nge-Indexer/' . config('indexer.version'))->get($url);
+        try {
+            $res = Http::timeout(20)->retry(2, 2000, throw: false)
+                ->withUserAgent('DrStr4nge-Indexer/' . config('indexer.version'))->get($url);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            throw new \RuntimeException(parse_url($url, PHP_URL_HOST) . ' nicht erreichbar: ' . $e->getMessage(), 0, $e);
+        }
         if (!$res->successful()) {
             throw new \RuntimeException(parse_url($url, PHP_URL_HOST) . ' antwortet mit HTTP ' . $res->status());
         }

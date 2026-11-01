@@ -39,8 +39,8 @@ class VipController extends Controller
 
     public function buy(Request $request, string $plan)
     {
-        $p = config("indexer.plans.$plan");
-        abort_unless($p, 404);
+        $p = ((array) config('indexer.plans'))[$plan] ?? null; // kein config("...$plan"): Punkte im Namen würden tiefer greifen
+        abort_unless(is_array($p) && isset($p['price']), 404);
 
         if (!self::paymentReady()) {
             return redirect()->route('vip')->with('error', 'Die Krypto-Zahlung ist noch nicht eingerichtet. Bitte später erneut versuchen.');

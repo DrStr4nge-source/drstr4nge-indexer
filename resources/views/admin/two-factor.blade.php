@@ -35,10 +35,10 @@
             @elseif ($pending)
                 <ol class="tm-small" style="margin:0 0 16px 18px;line-height:1.8">
                     <li>App auf dem Handy öffnen, z.B. Google Authenticator, Aegis, 2FAS oder Microsoft Authenticator.</li>
-                    <li>Neues Konto hinzufügen und diesen QR-Code scannen:</li>
+                    <li>Neues Konto hinzufügen und {{ $qr ? 'diesen QR-Code scannen:' : 'den Schlüssel unten von Hand eingeben (Name oder E-Mail sind zu lang für einen QR-Code).' }}</li>
                 </ol>
                 <div style="display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap">
-                    <div style="background:#fff;padding:6px;border-radius:10px;line-height:0">{!! $qr !!}</div>
+                    @if ($qr)<div style="background:#fff;padding:6px;border-radius:10px;line-height:0">{!! $qr !!}</div>@endif
                     <div class="tm-small" style="flex:1;min-width:220px">
                         <p class="tm-muted">Scannen geht nicht? Diesen Schlüssel von Hand eingeben:</p>
                         <p style="font-family:ui-monospace,monospace;font-size:15px;word-break:break-all;margin:6px 0 16px">{{ trim(chunk_split($pending, 4, ' ')) }}</p>

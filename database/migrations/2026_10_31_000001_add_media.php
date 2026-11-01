@@ -30,7 +30,11 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('releases', fn (Blueprint $t) => $t->dropColumn(['media_id', 'meta_checked']));
+        Schema::table('releases', function (Blueprint $t) {
+            $t->dropIndex(['media_id']);
+            $t->dropIndex(['meta_checked']);
+            $t->dropColumn(['media_id', 'meta_checked']);
+        });
         Schema::dropIfExists('media');
     }
 };
