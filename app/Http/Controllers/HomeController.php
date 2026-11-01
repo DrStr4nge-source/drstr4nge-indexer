@@ -12,9 +12,9 @@ class HomeController extends Controller
     {
         return view('dashboard', [
             'user' => $request->user(),
-            // Für alle User gleich: eine Minute zwischenspeichern
-            'movies' => \Illuminate\Support\Facades\Cache::remember('home.movies', 60, fn () => $this->latest('movie')),
-            'shows' => \Illuminate\Support\Facades\Cache::remember('home.shows', 60, fn () => $this->latest('tv')),
+            // Für alle User gleich: eine Minute zwischenspeichern. Nur reine Daten (Laravel lehnt Objekte im Cache ab)
+            'movies' => Media::hydrate(\Illuminate\Support\Facades\Cache::remember('home.movies.v2', 60, fn () => $this->latest('movie')->map->getAttributes()->all())),
+            'shows' => Media::hydrate(\Illuminate\Support\Facades\Cache::remember('home.shows.v2', 60, fn () => $this->latest('tv')->map->getAttributes()->all())),
             'releases' => Release::lite()->visible()->with('media')->orderByDesc('posted_at')->limit(15)->get(),
             'hasMedia' => Media::query()->exists(),
         ]);

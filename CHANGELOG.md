@@ -2,6 +2,11 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.13.7] – 2026-11-01
+
+### Behoben
+- Fehler 500 auf Startseite und Film-/Serien-Seiten ab dem zweiten Aufruf ("incomplete object"): Cover-Reihen und Genres werden als reine Daten zwischengespeichert, weil Laravel keine Objekte im Cache zulässt
+
 ## [1.13.6] – 2026-11-01
 
 ### Geändert

@@ -43,8 +43,8 @@ class MediaListController extends Controller
             ->get(['id', 'guid', 'media_id', 'name', 'size', 'posted_at', 'category_id'])
             ->groupBy('media_id');
 
-        $genres = \Illuminate\Support\Facades\Cache::remember("genres.$type", 600, fn () => Media::where('type', $type)->whereNotNull('genres')->pluck('genres')
-            ->flatMap(fn ($g) => array_map('trim', explode(',', $g)))->filter()->unique()->sort()->values());
+        $genres = collect(\Illuminate\Support\Facades\Cache::remember("genres.$type.v2", 600, fn () => Media::where('type', $type)->whereNotNull('genres')->pluck('genres')
+            ->flatMap(fn ($g) => array_map('trim', explode(',', $g)))->filter()->unique()->sort()->values()->all()));
 
         return view('media.index', [
             'type' => $type,
