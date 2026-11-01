@@ -71,6 +71,7 @@ Route::middleware(['auth', EnsureAdmin::class])->prefix('admin')->name('admin.')
     Route::post('/groups', [AdminController::class, 'storeGroup'])->name('groups.store');
     Route::post('/groups/{group}/toggle', [AdminController::class, 'toggleGroup'])->name('groups.toggle');
     Route::post('/groups/{group}/reset', [AdminController::class, 'resetGroup'])->name('groups.reset');
+    Route::post('/groups/{group}/backfill', [AdminController::class, 'backfillGroup'])->name('groups.backfill');
     Route::delete('/groups/{group}', [AdminController::class, 'destroyGroup'])->name('groups.destroy');
     Route::get('/payments', [AdminController::class, 'payments'])->name('payments');
     Route::get('/einladungen', [InviteController::class, 'index'])->name('invites');

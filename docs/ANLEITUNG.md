@@ -353,6 +353,9 @@ Handy und Codes verloren: `php artisan indexer:2fa-reset deine@adresse`.
   steht im Betreff nur ein Platzhalter, kommt der Name aus dem Dateinamen. Umlaute in Latin-1 werden nach UTF-8 umgewandelt.
   Wie weit der erste Crawl einer Gruppe zurückgeht: `INDEXER_BACKFILL_DAYS=60` (Tage, der Indexer sucht für jede Gruppe selbst
   den passenden Artikel) oder, wenn 0, `INDEXER_BACKFILL` (Anzahl der neuesten Artikel).
+  Jede Gruppe kann im Admin unter "Newsgroups" eigene Backfill-Tage bekommen (Spalte "Backfill (Tage)", leer = allgemeiner Wert,
+  0 = nach Anzahl). Der Wert gilt beim ersten Crawl; für eine schon gelesene Gruppe danach "Neu einlesen" drücken.
+  Ältere Releases werden dabei nicht gelöscht.
   Eine fehlerhafte Gruppe stoppt die anderen nicht. Nach einem Update kannst du eine Gruppe im Admin mit "Neu einlesen" noch einmal lesen lassen.
 - **Kategorien** (Newznab): Film SD/HD/UHD/BluRay, TV SD/HD/UHD/Sport/Anime, Audio, Bücher, Comics, PC, Spiele, Konsolen, XXX. Sonarr und Radarr finden dadurch passende Releases. Anpassbar in `config/indexer.php` und `app/Services/Categorizer.php`.
 - **Verschleierte Namen:** zufällige Namen werden erkannt, versteckt und (`indexer:inspect`) über die PAR2-Datei aufgelöst.

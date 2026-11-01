@@ -2,6 +2,15 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.14.0] – 2026-11-01
+
+### Neu
+- Backfill-Tage pro Newsgroup: im Admin unter "Newsgroups" hat jede Gruppe ein eigenes Feld "Backfill (Tage)". Leer = allgemeiner Wert (`INDEXER_BACKFILL_DAYS` bzw. Zugangsdaten-Seite), 0 = nach Anzahl (`INDEXER_BACKFILL`). Der Wert gilt beim ersten Crawl einer Gruppe, für schon gelesene Gruppen nach "Neu einlesen".
+- Beim Hinzufügen einer Gruppe kann der Backfill direkt mit angegeben werden
+
+### Geändert
+- Die Newsgroup-Seite im Admin lädt schneller (Release-Zahlen pro Gruppe werden 5 Minuten zwischengespeichert)
+
 ## [1.13.8] – 2026-11-01
 
 ### Behoben

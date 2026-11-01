@@ -81,11 +81,11 @@ class CrawlGroups extends Command
         return self::SUCCESS;
     }
 
-    /** Startpunkt beim ersten Crawl einer Gruppe: nach Tagen (INDEXER_BACKFILL_DAYS) oder nach Anzahl (INDEXER_BACKFILL). */
-    private function firstStart(Nntp $nntp, string $name, int $low, int $high): int
+    /** Startpunkt beim ersten Crawl einer Gruppe: nach Tagen (eigener Wert der Gruppe oder INDEXER_BACKFILL_DAYS) oder nach Anzahl (INDEXER_BACKFILL). */
+    private function firstStart(Nntp $nntp, string $name, int $low, int $high, ?int $groupDays = null): int
     {
         $byCount = max($low, $high - (int) config('indexer.backfill'));
-        $days = (int) config('indexer.backfill_days');
+        $days = $groupDays ?? (int) config('indexer.backfill_days');
         if ($days <= 0) {
             return $byCount;
         }
@@ -132,7 +132,7 @@ class CrawlGroups extends Command
                 [$low, $high] = $this->retry($nntp, null, fn () => $nntp->group($g->name));
                 $start = $g->last_article > 0
                     ? max($g->last_article + 1, $low)
-                    : $this->firstStart($nntp, $g->name, $low, $high);
+                    : $this->firstStart($nntp, $g->name, $low, $high, isset($g->backfill_days) ? (int) $g->backfill_days : null);
                 if ($start > $high) {
                     $this->info("{$g->name}: nichts Neues");
                 }

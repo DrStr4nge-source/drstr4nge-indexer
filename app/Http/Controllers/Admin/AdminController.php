@@ -70,14 +70,36 @@ class AdminController extends Controller
 
     public function groups()
     {
-        return view('admin.groups', ['groups' => Newsgroup::withCount('releases')->orderBy('name')->get()]);
+        // Release-Zahl je Gruppe kostet bei Millionen Releases Zeit: 5 Minuten zwischenspeichern
+        $counts = \App\Support\Stats::remember('group_counts', fn () => Release::query()->selectRaw('newsgroup_id, count(*) as n')->groupBy('newsgroup_id')->pluck('n', 'newsgroup_id')->all());
+        $groups = Newsgroup::orderBy('name')->get()->each(fn ($g) => $g->releases_count = $counts[$g->id] ?? 0);
+        return view('admin.groups', ['groups' => $groups, 'defaultDays' => (int) config('indexer.backfill_days')]);
     }
 
     public function storeGroup(Request $request)
     {
-        $data = $request->validate(['name' => 'required|string|max:255|unique:newsgroups,name']);
-        Newsgroup::create(['name' => trim($data['name'])]);
+        $data = $request->validate([
+            'name' => 'required|string|max:255|unique:newsgroups,name',
+            'backfill_days' => 'nullable|integer|min:0|max:5000',
+        ]);
+        Newsgroup::create(['name' => trim($data['name']), 'backfill_days' => self::days($data['backfill_days'] ?? null)]);
         return back();
+    }
+
+    /** Leeres Feld = kein eigener Wert (null), sonst Zahl */
+    private static function days(mixed $v): ?int
+    {
+        return $v === null || trim((string) $v) === '' ? null : (int) $v;
+    }
+
+    /** Eigene Backfill-Tage einer Gruppe (leer = allgemeiner Wert). Gilt beim ersten Crawl bzw. nach "Neu einlesen". */
+    public function backfillGroup(Request $request, Newsgroup $group)
+    {
+        $data = $request->validate(['backfill_days' => 'nullable|integer|min:0|max:5000']);
+        $group->update(['backfill_days' => self::days($data['backfill_days'] ?? null)]);
+        $days = $group->backfillDays();
+        return back()->with('status', "{$group->name}: Backfill " . ($days > 0 ? "$days Tage" : 'nach Anzahl (' . number_format((int) config('indexer.backfill'), 0, ',', '.') . ' Artikel)')
+            . ($group->backfill_days === null ? ' (allgemeiner Wert)' : '') . '. Gilt beim nächsten "Neu einlesen".');
     }
 
     public function toggleGroup(Newsgroup $group)
