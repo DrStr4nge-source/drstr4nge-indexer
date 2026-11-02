@@ -1,6 +1,6 @@
 <?php
 return [
-    'version' => '1.16.0',
+    'version' => '1.17.0',
     // Zeitzone für Anzeige und Zeitplan (gespeichert wird in UTC)
     'timezone' => env('INDEXER_TIMEZONE', 'Europe/Berlin'),
 

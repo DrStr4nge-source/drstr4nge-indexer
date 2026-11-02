@@ -61,7 +61,14 @@ class ReleaseBuilder
             ];
         }
 
+        // BETA (Admin > Einstellungen): neue verschleierte Releases gar nicht erst speichern
+        $skipObf = \App\Models\Setting::get('skip_obfuscated') === '1';
+        $skipped = 0;
         foreach ($acc as $guid => $d) {
+            if ($skipObf && ($d['anon'] || Obfuscation::looks($d['name'])) && !Release::where('guid', $guid)->exists()) {
+                $skipped++;
+                continue;
+            }
             $rel = Release::firstOrNew(['guid' => $guid]);
             $isNew = !$rel->exists;
             $files = $isNew ? [] : $rel->files;
@@ -109,7 +116,11 @@ class ReleaseBuilder
                 \Illuminate\Support\Facades\Log::warning(sprintf('Release "%s" (%s Dateien) nicht gespeichert: %s', mb_substr($rel->name, 0, 120), count($files), mb_substr($e->getMessage(), 0, 200)));
             }
         }
-        return count($acc);
+        if ($skipped) {
+            \Illuminate\Support\Facades\Cache::add('skip_obfuscated.count', 0);
+            \Illuminate\Support\Facades\Cache::increment('skip_obfuscated.count', $skipped);
+        }
+        return count($acc) - $skipped;
     }
 
     public function classify(Release $rel): void

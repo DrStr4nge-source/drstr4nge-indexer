@@ -15,6 +15,9 @@ class SettingsController extends Controller
             'logoPath' => Setting::get('logo_path'),
             'registrationMode' => \App\Support\Registration::mode(),
             'require2fa' => Setting::get('admin_require_2fa') === '1',
+            'skipObfuscated' => Setting::get('skip_obfuscated') === '1',
+            'skippedCount' => (int) \Illuminate\Support\Facades\Cache::get('skip_obfuscated.count', 0),
+            'skipSince' => Setting::get('skip_obfuscated_since'),
         ]);
     }
 
@@ -37,6 +40,16 @@ class SettingsController extends Controller
         }
         Setting::put('site_name', trim($data['site_name']));
         Setting::put('admin_require_2fa', $request->boolean('admin_require_2fa') ? '1' : null);
+        // BETA: verschleierte Releases nicht speichern. Beim Einschalten Zähler neu starten, Ausschalten = Verhalten wie vorher.
+        $skip = $request->boolean('skip_obfuscated');
+        if ($skip && Setting::get('skip_obfuscated') !== '1') {
+            \Illuminate\Support\Facades\Cache::forever('skip_obfuscated.count', 0);
+            Setting::put('skip_obfuscated_since', (string) time());
+        }
+        Setting::put('skip_obfuscated', $skip ? '1' : null);
+        if (!$skip) {
+            Setting::put('skip_obfuscated_since', null);
+        }
         if (!empty($data['registration_mode'])) {
             Setting::put('registration_mode', $data['registration_mode']);
         }

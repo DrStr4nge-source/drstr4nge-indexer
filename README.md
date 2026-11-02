@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version 1.16.0" src="https://img.shields.io/badge/version-1.16.0-f59e0b">
+  <img alt="Version 1.17.0" src="https://img.shields.io/badge/version-1.17.0-f59e0b">
   <img alt="PHP 8.5" src="https://img.shields.io/badge/PHP-8.5-777bb4">
   <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12%20%7C%2013-ff2d20">
   <img alt="Ubuntu 24.04" src="https://img.shields.io/badge/Ubuntu-24.04%20LTS-e95420">

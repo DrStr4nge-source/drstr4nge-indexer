@@ -2,6 +2,12 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.17.0] – 2026-11-02
+
+### Neu (BETA)
+- Admin > Einstellungen: "Verschleierte Releases nicht speichern". Der Crawler überspringt neue Releases ohne echten Namen. Datenbank, Aufräumen und Sicherung bleiben dadurch klein. Schon gespeicherte Releases bleiben unberührt, bestehende verschleierte Releases werden weiter ergänzt. Die Seite zeigt, seit wann die Einstellung aktiv ist und wie viele Releases übersprungen wurden.
+- Zurücksetzen: Haken entfernen und speichern, dann speichert der Crawler wieder alles. Übersprungenes lässt sich über "Neu einlesen" einer Gruppe nachholen.
+
 ## [1.16.0] – 2026-11-01
 
 Ergebnis einer Fehlersuche über den ganzen Code.

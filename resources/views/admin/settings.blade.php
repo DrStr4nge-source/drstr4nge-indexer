@@ -51,6 +51,22 @@
                     @error('admin_require_2fa')<ul class="tm-error"><li>{{ $message }}</li></ul>@enderror
                 </div>
 
+                <div style="padding:14px;border:1px solid var(--tm-line);border-radius:10px;background:var(--tm-bg-2)">
+                    <label class="tm-small" style="display:flex;align-items:center;gap:8px">
+                        <input type="checkbox" name="skip_obfuscated" value="1" @checked(old('skip_obfuscated', $skipObfuscated))>
+                        Verschleierte Releases nicht speichern <span class="tm-chip accent">BETA</span>
+                    </label>
+                    <p class="tm-muted tm-small" style="margin-top:6px">Der Crawler überspringt neue Releases ohne echten Namen (Zufallszeichen, unbekannte Poster).
+                        Datenbank, Aufräumen und Sicherung bleiben dadurch klein. Nachteil: Releases, die erst über PAR2 oder die PreDB ihren Namen bekämen, fehlen.
+                        Schon gespeicherte Releases bleiben unberührt.</p>
+                    <p class="tm-muted tm-small" style="margin-top:6px"><b>Zurücksetzen:</b> Haken entfernen und speichern, dann speichert der Crawler wieder alles.
+                        Übersprungenes lässt sich bei Bedarf über "Neu einlesen" einer Gruppe nachholen.</p>
+                    @if ($skipObfuscated)
+                        <p class="tm-small" style="margin-top:6px">Aktiv seit {{ $skipSince ? \App\Support\Format::dt(\Illuminate\Support\Carbon::createFromTimestamp((int) $skipSince)) : '–' }},
+                            übersprungen: <b>{{ number_format($skippedCount, 0, ',', '.') }}</b></p>
+                    @endif
+                </div>
+
                 <div><button class="tm-btn tm-btn-primary">Speichern</button></div>
             </form>
         </section>
