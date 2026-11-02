@@ -62,6 +62,15 @@ Die Oberfläche ist auf Deutsch.
 - Meldungen der User bearbeiten, `indexer:status` zeigt alles auf einen Blick
 - Verbindungstest zum Usenet-Provider mit verständlichen Fehlermeldungen
 
+## BETA (noch im Test)
+
+Diese Funktionen sind neu und werden noch getestet. Sie bleiben hier aufgeführt, bis sie freigegeben sind.
+
+- **Verschleierte Releases nicht speichern** (seit 1.17.0): Admin > Einstellungen. Der Crawler überspringt neue Releases ohne echten Namen.
+  Datenbank, Aufräumen und Sicherung bleiben dadurch klein. Zurücksetzen: Haken entfernen und speichern. Übersprungenes holt "Neu einlesen" einer Gruppe nach.
+- **Wartezeit vor dem Prüfen** (seit 1.17.1): `INDEXER_INSPECT_DELAY_MINUTES=30`. PAR2/RAR werden erst geprüft, wenn ein Release 30 Minuten
+  keine neuen Teile bekam. Zurücksetzen: `INDEXER_INSPECT_DELAY_MINUTES=0` in der `.env`, danach `sudo -u www-data php artisan config:cache`.
+
 ## Screenshots
 
 | Filme mit Infos | Detailseite |
