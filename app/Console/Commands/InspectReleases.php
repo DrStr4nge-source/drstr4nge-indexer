@@ -20,8 +20,12 @@ class InspectReleases extends Command
     {
         $limit = (int) ($this->option('limit') ?: config('indexer.inspect_per_run'));
         // Nur die IDs holen; jedes Release einzeln mit Artikel-Liste laden (spart Speicher bei großen Releases)
+        // Erst prüfen, wenn das Release eine Weile keine neuen Teile bekommen hat: frisch hochgeladene Artikel sind beim
+        // Provider oft noch nicht überall angekommen (430), und es gibt pro Release nur einen Versuch.
+        $delay = max(0, (int) config('indexer.inspect_delay_minutes'));
         $ids = Release::where('inspected', false)
             ->where('completion', '>=', config('indexer.min_completion'))
+            ->when($delay > 0, fn ($q) => $q->where('updated_at', '<', now()->subMinutes($delay)))
             ->orderBy('id')->limit($limit)->pluck('id');
         if ($ids->isEmpty()) {
             $this->info('Nichts zu prüfen.');

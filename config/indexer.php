@@ -1,6 +1,6 @@
 <?php
 return [
-    'version' => '1.17.0',
+    'version' => '1.17.1',
     // Zeitzone für Anzeige und Zeitplan (gespeichert wird in UTC)
     'timezone' => env('INDEXER_TIMEZONE', 'Europe/Berlin'),
 
@@ -76,6 +76,7 @@ return [
     'delete_passworded_days' => (int) env('INDEXER_DELETE_PASSWORDED_DAYS', 1), // passwortgeschützte nach X Tagen löschen, 0 = nie
     'min_size'           => (int) env('INDEXER_MIN_SIZE', 1048576),    // kleinere Releases gelten als Spam
     'inspect_per_run'    => (int) env('INDEXER_INSPECT_PER_RUN', 100), // Par2/RAR-Prüfungen pro Lauf
+    'inspect_delay_minutes' => (int) env('INDEXER_INSPECT_DELAY_MINUTES', 30), // erst prüfen, wenn so lange keine neuen Teile kamen (Provider braucht Zeit zum Verteilen)
     'api_limit'          => (int) env('INDEXER_API_LIMIT', 60),        // API-Aufrufe pro Minute (Standard)
     'api_limit_vip'      => (int) env('INDEXER_API_LIMIT_VIP', 300),   // API-Aufrufe pro Minute (VIP)
     'spam_words'         => array_filter(array_map('trim', explode(',', (string) env('INDEXER_SPAM_WORDS', 'viagra,cialis')))),
