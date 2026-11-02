@@ -4,7 +4,7 @@ Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden r�
 
 ## [1.17.1] – 2026-11-02
 
-### Geändert (BETA)
+### Geändert
 - `indexer:inspect` prüft ein Release erst, wenn es 30 Minuten keine neuen Teile mehr bekommen hat (`INDEXER_INSPECT_DELAY_MINUTES`, 0 = sofort). Frisch hochgeladene PAR2-/RAR-Artikel sind beim Provider oft noch nicht überall angekommen, und pro Release gibt es nur einen Prüfversuch.
 
 ## [1.17.0] – 2026-11-02

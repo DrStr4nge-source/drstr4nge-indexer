@@ -68,8 +68,6 @@ Diese Funktionen sind neu und werden noch getestet. Sie bleiben hier aufgeführt
 
 - **Verschleierte Releases nicht speichern** (seit 1.17.0): Admin > Einstellungen. Der Crawler überspringt neue Releases ohne echten Namen.
   Datenbank, Aufräumen und Sicherung bleiben dadurch klein. Zurücksetzen: Haken entfernen und speichern. Übersprungenes holt "Neu einlesen" einer Gruppe nach.
-- **Wartezeit vor dem Prüfen** (seit 1.17.1): `INDEXER_INSPECT_DELAY_MINUTES=30`. PAR2/RAR werden erst geprüft, wenn ein Release 30 Minuten
-  keine neuen Teile bekam. Zurücksetzen: `INDEXER_INSPECT_DELAY_MINUTES=0` in der `.env`, danach `sudo -u www-data php artisan config:cache`.
 
 ## Screenshots
 
@@ -130,7 +128,7 @@ Die ausführliche Anleitung mit manueller Installation, allen Einstellungen und 
 |---|---|---|
 | `NNTP_HOST`, `NNTP_PORT`, `NNTP_SSL`, `NNTP_USER`, `NNTP_PASS` | Zugang zum Usenet-Provider | Port 563, SSL an |
 | `NNTP_CONNECTIONS` | gleichzeitige Verbindungen des Crawlers | 4 |
-| `INDEXER_INSPECT_DELAY_MINUTES` | (BETA) PAR2/RAR erst prüfen, wenn ein Release so lange keine neuen Teile bekam | 30 |
+| `INDEXER_INSPECT_DELAY_MINUTES` | PAR2/RAR erst prüfen, wenn ein Release so lange keine neuen Teile bekam | 30 |
 | `INDEXER_BACKFILL_DAYS` | erster Crawl einer Gruppe: so viele Tage zurück (0 = nach Anzahl). Pro Gruppe im Admin unter "Newsgroups" änderbar | 0 |
 | `INDEXER_BACKFILL` | sonst: neueste Artikel beim ersten Crawl einer Gruppe | 100000 |
 | `INDEXER_FREE_GRABS` | Downloads pro Tag ohne VIP | 5 |
