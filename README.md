@@ -121,7 +121,7 @@ Die ausführliche Anleitung mit manueller Installation, allen Einstellungen und 
 |---|---|---|
 | `NNTP_HOST`, `NNTP_PORT`, `NNTP_SSL`, `NNTP_USER`, `NNTP_PASS` | Zugang zum Usenet-Provider | Port 563, SSL an |
 | `NNTP_CONNECTIONS` | gleichzeitige Verbindungen des Crawlers | 4 |
-| `INDEXER_INSPECT_DELAY_MINUTES` | PAR2/RAR erst prüfen, wenn ein Release so lange keine neuen Teile bekam | 30 |
+| `INDEXER_INSPECT_DELAY_MINUTES` | (BETA) PAR2/RAR erst prüfen, wenn ein Release so lange keine neuen Teile bekam | 30 |
 | `INDEXER_BACKFILL_DAYS` | erster Crawl einer Gruppe: so viele Tage zurück (0 = nach Anzahl). Pro Gruppe im Admin unter "Newsgroups" änderbar | 0 |
 | `INDEXER_BACKFILL` | sonst: neueste Artikel beim ersten Crawl einer Gruppe | 100000 |
 | `INDEXER_FREE_GRABS` | Downloads pro Tag ohne VIP | 5 |
