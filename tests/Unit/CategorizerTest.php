@@ -27,6 +27,17 @@ class CategorizerTest extends TestCase
             ['Linux.Distro.1.0.ISO', [], 4020],
             ['Name.XXX.1080p', [], 6000],
             ['randomname', [], 7000],
+            // Anime-Film / Anime-Serie / Doku
+            ['[SubsPlease] Chainsaw Man The Movie Reze Arc (2025) (1080p)', [], 2100],
+            ['[PHTM] Josee, the Tiger and the Fish (2020) (BD 1080p x265 Opus 5.1) (Multi-Audio) (German_Deutsch)', [], 2100],
+            ['[Fuechslein] KILL la KILL - S01 (BD 1080p AV1 Opus 2.0) [Dual-Audio] [Multi-Audio] (Japanese, German_Deutsch)', [], 5070],
+            ['DemiHuman KonoSuba BD 1080p HEVC Opus 2.0 Dual - Audio, Multi - Audio, Multi - Sub - Japanese, English, German Dubs', [], 5070],
+            ['[Group] Some Show - 12 (1080p) [Dual-Audio]', [], 5070],
+            ['Terra.X.Faszination.Erde.S05E02.Doku.German.1080p.WEB.h264-GRP', [], 5080],
+            ['Die.Nordsee.Dokumentation.2024.German.1080p.WEB.x264-GRP', [], 5080],
+            ['Street.Fighter.2026.German.CAM.1080p.x264-LiNEUP', [], 2040],
+            ['Josie.der.Tiger.und.die.Fische.2020.GERMAN.ML.1080p.BD.Opus.5.1.10bit.x265-PHTM', [], 2040],
+            ['Tatort.S55E10.German.720p.WEB.h264-GRP', [], 5040],
         ];
         foreach ($cases as [$name, $files, $expected]) {
             $this->assertSame($expected, Categorizer::detect($name, $files), $name);

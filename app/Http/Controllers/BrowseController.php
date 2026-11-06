@@ -24,7 +24,13 @@ class BrowseController extends Controller
         $releases = (new LengthAwarePaginator($res['rows'], $res['total'], $perPage, $page, ['path' => $request->url()]))
             ->withQueryString();
         $parents = collect(config('indexer.categories'))->filter(fn ($c) => $c[1] === null)->map(fn ($c) => $c[0]);
-        return view('browse', compact('releases', 'parents'));
+        // Für die Auswahl: Hauptkategorie mit ihren Unterkategorien
+        $tree = $parents->map(fn ($name, $id) => [
+            'name' => $name,
+            'subs' => collect(config('indexer.categories'))->filter(fn ($c) => $c[1] === $id)->map(fn ($c) => $c[0])->all(),
+        ]);
+        $catName = $request->query('cat') ? \App\Services\Categories::name((int) $request->query('cat')) : null;
+        return view('browse', compact('releases', 'parents', 'tree', 'catName'));
     }
 
     public function download(Request $request, string $guid)

@@ -21,6 +21,13 @@ class PredbNet
         return self::request(['q' => $name]);
     }
 
+    /** Bis wann predb.net nach 403/429 nicht gefragt wird (Unix-Zeit), null = keine Pause */
+    public static function pausedUntil(): ?int
+    {
+        $t = (int) \Illuminate\Support\Facades\Cache::get('predb_api.paused_until', 0);
+        return $t > time() ? $t : null;
+    }
+
     private static function request(array $query): array
     {
         try {
@@ -31,8 +38,12 @@ class PredbNet
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             throw new \RuntimeException('predb.net nicht erreichbar: ' . $e->getMessage(), 0, $e);
         }
-        if ($res->status() === 429) {
-            throw new \RuntimeException('predb.net: zu viele Anfragen (429), später erneut');
+        // 403 (gesperrt) oder 429 (zu viele Anfragen): 24 Stunden Pause, statt alle 5 Minuten erneut zu fragen
+        if (in_array($res->status(), [403, 429], true)) {
+            $hours = (int) config('indexer.predb_api.block_pause_hours', 24);
+            \Illuminate\Support\Facades\Cache::put('predb_api.paused_until', time() + $hours * 3600, $hours * 3600);
+            throw new PredbNetPaused(sprintf('predb.net antwortet mit HTTP %d (%s). Abfragen pausieren %d Stunden.',
+                $res->status(), $res->status() === 403 ? 'Zugriff gesperrt' : 'zu viele Anfragen', $hours));
         }
         if (!$res->successful()) {
             throw new \RuntimeException('predb.net antwortet mit HTTP ' . $res->status());

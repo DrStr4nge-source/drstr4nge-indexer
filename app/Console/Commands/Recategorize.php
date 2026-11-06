@@ -14,10 +14,11 @@ class Recategorize extends Command
     public function handle(ReleaseBuilder $builder): int
     {
         if ($this->option('if-changed')) {
-            if (!\Illuminate\Support\Facades\Cache::pull('blacklist.changed')) {
+            $rules = (int) \Illuminate\Support\Facades\Cache::get('categorizer.version') !== \App\Services\Categorizer::VERSION;
+            if (!\Illuminate\Support\Facades\Cache::pull('blacklist.changed') && !$rules) {
                 return self::SUCCESS;
             }
-            $this->info('Blacklist wurde geändert, prüfe alle Releases neu.');
+            $this->info($rules ? 'Kategorie-Regeln wurden geändert (Update), ordne alle Releases neu ein.' : 'Blacklist wurde geändert, prüfe alle Releases neu.');
         }
         $n = 0;
         Release::chunkById(500, function ($chunk) use ($builder, &$n) {
@@ -32,6 +33,7 @@ class Recategorize extends Command
                 $n++;
             }
         });
+        \Illuminate\Support\Facades\Cache::forever('categorizer.version', \App\Services\Categorizer::VERSION);
         $this->info("$n Releases neu eingeordnet.");
         return self::SUCCESS;
     }

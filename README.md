@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version 1.17.1" src="https://img.shields.io/badge/version-1.17.1-f59e0b">
+  <img alt="Version 1.18.0" src="https://img.shields.io/badge/version-1.18.0-f59e0b">
   <img alt="PHP 8.5" src="https://img.shields.io/badge/PHP-8.5-777bb4">
   <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12%20%7C%2013-ff2d20">
   <img alt="Ubuntu 24.04" src="https://img.shields.io/badge/Ubuntu-24.04%20LTS-e95420">
@@ -26,7 +26,7 @@ Die Oberfläche ist auf Deutsch.
 **Indexing**
 - Crawler für beliebig viele Newsgroups, mehrere Verbindungen gleichzeitig (`NNTP_CONNECTIONS`)
 - Versteht klassische und abweichende Betreffzeilen (inkl. Platzhalter wie "Description" und Latin-1-Umlauten)
-- Kategorien nach Newznab: Filme (SD/HD/UHD/BluRay), TV (SD/HD/UHD/Sport/Anime), Audio, Bücher, Comics, PC, Spiele, Konsolen, XXX
+- Kategorien nach Newznab: Filme (SD/HD/UHD/BluRay/Anime), TV (SD/HD/UHD/Sport/Anime/Doku), Audio, Bücher, Comics, PC, Spiele, Konsolen, XXX
 - Verschleierte Namen werden erkannt und über die PAR2-Datei aufgelöst
 - Erkennung passwortgeschützter RAR-Archive (RAR4 und RAR5)
 - Spam-Schutz: Blacklist für Poster und Namen (Regex), Spam-Wörter, nur ausführbare Dateien, zu kleine Releases

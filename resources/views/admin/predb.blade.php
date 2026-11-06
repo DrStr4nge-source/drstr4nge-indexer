@@ -17,7 +17,7 @@
                     <div class="tm-muted tm-small">Dienst prüfen: systemctl status drstr4nge-pre</div>
                 @endif
             </div>
-            <div class="tm-stat"><div class="tm-muted tm-small">Letzter Pre</div><div class="v" style="font-size:20px;padding:4px 0">{{ $lastAt ? \App\Support\Format::ago($lastAt) : '–' }}</div><div class="tm-muted tm-small">{{ number_format($today, 0, ',', '.') }} heute · predb.net: {{ !$apiEnabled ? 'aus' : ($apiAt ? \App\Support\Format::ago($apiAt) : 'noch nie') }} · RSS: {{ !$rssEnabled ? 'aus' : ($rssAt ? \App\Support\Format::ago($rssAt) : 'noch nie') }}</div></div>
+            <div class="tm-stat"><div class="tm-muted tm-small">Letzter Pre</div><div class="v" style="font-size:20px;padding:4px 0">{{ $lastAt ? \App\Support\Format::ago($lastAt) : '–' }}</div><div class="tm-muted tm-small">{{ number_format($today, 0, ',', '.') }} heute · predb.net: {{ !$apiEnabled ? 'aus' : ($apiPausedUntil ? 'pausiert bis ' . \App\Support\Format::dt($apiPausedUntil, 'd.m. H:i') . ' (HTTP 403/429)' : ($apiAt ? \App\Support\Format::ago($apiAt) : 'noch nie')) }} · RSS: {{ !$rssEnabled ? 'aus' : ($rssAt ? \App\Support\Format::ago($rssAt) : 'noch nie') }}</div></div>
             <div class="tm-stat"><div class="tm-muted tm-small">Einträge</div><div class="v">{{ number_format($total, 0, ',', '.') }}</div></div>
             <div class="tm-stat"><div class="tm-muted tm-small">Releases mit Pre</div><div class="v">{{ number_format($linked, 0, ',', '.') }}</div></div>
         </div>

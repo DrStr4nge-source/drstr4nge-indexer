@@ -1,6 +1,6 @@
 <?php
 return [
-    'version' => '1.17.1',
+    'version' => '1.18.0',
     // Zeitzone für Anzeige und Zeitplan (gespeichert wird in UTC)
     'timezone' => env('INDEXER_TIMEZONE', 'Europe/Berlin'),
 
@@ -42,9 +42,10 @@ return [
     'predb_api' => [
         'enabled' => (bool) env('PREDB_API_ENABLED', true),
         'url' => env('PREDB_API_URL', 'https://api.predb.net'),
-        'pages' => (int) env('PREDB_API_PAGES', 5),      // höchstens so viele Seiten à 100 pro Lauf
-        'lookup' => (int) env('PREDB_API_LOOKUP', 20),   // Releases ohne Pre pro Lauf einzeln nachschlagen
-        'pause_ms' => (int) env('PREDB_API_PAUSE_MS', 1500),
+        'pages' => (int) env('PREDB_API_PAGES', 2),      // höchstens so viele Seiten à 100 pro Lauf
+        'lookup' => (int) env('PREDB_API_LOOKUP', 5),    // Releases ohne Pre pro Lauf einzeln nachschlagen
+        'pause_ms' => (int) env('PREDB_API_PAUSE_MS', 3000),
+        'block_pause_hours' => (int) env('PREDB_API_BLOCK_PAUSE_HOURS', 24), // nach HTTP 403/429 so lange nicht fragen
     ],
 
     // Pre-Daten aus RSS-Feeds (mit indexer:pre-fetch, alle 5 Minuten), mehrere mit Komma trennen, leer = aus
@@ -129,10 +130,11 @@ return [
         1050 => ['Console/Xbox 360', 1000], 1080 => ['Console/PS3', 1000], 1180 => ['Console/PS4', 1000],
         2000 => ['Movies', null], 2030 => ['Movies/SD', 2000], 2040 => ['Movies/HD', 2000],
         2045 => ['Movies/UHD', 2000], 2050 => ['Movies/BluRay', 2000],
+        2100 => ['Movies/Anime', 2000], // kein Newznab-Standard (2090 ist bei Prowlarr Movies/x265); Spalte erlaubt nur bis 65535
         3000 => ['Audio', null], 3010 => ['Audio/MP3', 3000], 3030 => ['Audio/Audiobook', 3000], 3040 => ['Audio/Lossless', 3000],
         4000 => ['PC', null], 4010 => ['PC/0day', 4000], 4020 => ['PC/ISO', 4000], 4030 => ['PC/Mac', 4000], 4050 => ['PC/Games', 4000],
         5000 => ['TV', null], 5030 => ['TV/SD', 5000], 5040 => ['TV/HD', 5000], 5045 => ['TV/UHD', 5000],
-        5060 => ['TV/Sport', 5000], 5070 => ['TV/Anime', 5000],
+        5060 => ['TV/Sport', 5000], 5070 => ['TV/Anime', 5000], 5080 => ['TV/Doku', 5000],
         6000 => ['XXX', null],
         7000 => ['Other', null], 7020 => ['Other/Ebook', 7000], 7030 => ['Other/Comics', 7000],
     ],

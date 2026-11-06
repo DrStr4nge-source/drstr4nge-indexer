@@ -22,6 +22,10 @@ class PreFetch extends Command
             $this->info('predb.net ist aus (PREDB_API_ENABLED=false).');
             return $rssOk ? self::SUCCESS : self::FAILURE;
         }
+        if ($until = \App\Services\Pre\PredbNet::pausedUntil()) {
+            $this->info('predb.net pausiert bis ' . \App\Support\Format::dt(\Illuminate\Support\Carbon::createFromTimestamp($until)) . ' (vorher HTTP 403/429).');
+            return $rssOk ? self::SUCCESS : self::FAILURE;
+        }
         $pages = max(1, (int) ($this->option('pages') ?: config('indexer.predb_api.pages')));
         $pause = (int) config('indexer.predb_api.pause_ms') * 1000;
         $new = $upd = 0;
@@ -66,6 +70,11 @@ class PreFetch extends Command
                 }
                 $this->info("Nachgeschlagen: {$rels->count()} Releases, $found mit Pre gefunden.");
             }
+        } catch (\App\Services\Pre\PredbNetPaused $e) {
+            // Einmal ins Log, danach wird bis zum Ende der Pause gar nicht mehr gefragt
+            $this->warn($e->getMessage());
+            \Illuminate\Support\Facades\Log::warning('Pre holen: ' . $e->getMessage());
+            return $rssOk ? self::SUCCESS : self::FAILURE;
         } catch (\RuntimeException $e) {
             $this->error($e->getMessage());
             \Illuminate\Support\Facades\Log::warning('Pre holen: ' . $e->getMessage());

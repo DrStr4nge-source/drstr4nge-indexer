@@ -5,7 +5,7 @@
             <div class="tm-eyebrow">Suche</div>
             <h1 class="tm-h1">
                 @if (request('q')) Ergebnisse für „{{ request('q') }}“
-                @elseif (request('cat')) {{ $parents[request('cat')] ?? 'Releases' }}
+                @elseif (request('cat')) {{ $parents[request('cat')] ?? $catName ?? 'Releases' }}
                 @else Alle Releases
                 @endif
             </h1>
@@ -18,8 +18,17 @@
             <input class="tm-input grow" type="search" name="q" value="{{ request('q') }}" placeholder="Name, Gruppe, Auflösung …">
             <select name="cat" class="tm-select" style="width:auto">
                 <option value="">Alle Kategorien</option>
-                @foreach ($parents as $id => $label)
-                    <option value="{{ $id }}" @selected(request('cat') == $id)>{{ $label }}</option>
+                @foreach ($tree as $id => $t)
+                    @if ($t['subs'])
+                        <optgroup label="{{ $t['name'] }}">
+                            <option value="{{ $id }}" @selected(request('cat') == $id)>{{ $t['name'] }} (alle)</option>
+                            @foreach ($t['subs'] as $sid => $sname)
+                                <option value="{{ $sid }}" @selected(request('cat') == $sid)>{{ $sname }}</option>
+                            @endforeach
+                        </optgroup>
+                    @else
+                        <option value="{{ $id }}" @selected(request('cat') == $id)>{{ $t['name'] }}</option>
+                    @endif
                 @endforeach
             </select>
             <button class="tm-btn tm-btn-primary">Suchen</button>

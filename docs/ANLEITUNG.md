@@ -369,7 +369,7 @@ Handy und Codes verloren: `php artisan indexer:2fa-reset deine@adresse`.
   0 = nach Anzahl). Der Wert gilt beim ersten Crawl; für eine schon gelesene Gruppe danach "Neu einlesen" drücken.
   Ältere Releases werden dabei nicht gelöscht.
   Eine fehlerhafte Gruppe stoppt die anderen nicht. Nach einem Update kannst du eine Gruppe im Admin mit "Neu einlesen" noch einmal lesen lassen.
-- **Kategorien** (Newznab): Film SD/HD/UHD/BluRay, TV SD/HD/UHD/Sport/Anime, Audio, Bücher, Comics, PC, Spiele, Konsolen, XXX. Sonarr und Radarr finden dadurch passende Releases. Anpassbar in `config/indexer.php` und `app/Services/Categorizer.php`.
+- **Kategorien** (Newznab): Film SD/HD/UHD/BluRay/Anime, TV SD/HD/UHD/Sport/Anime/Doku, Audio, Bücher, Comics, PC, Spiele, Konsolen, XXX. Sonarr und Radarr finden dadurch passende Releases. Anpassbar in `config/indexer.php` und `app/Services/Categorizer.php`.
 - **Verschleierte Releases nicht speichern (BETA):** Admin > Einstellungen. Der Crawler überspringt dann neue Releases ohne echten Namen,
   die Datenbank bleibt klein. Zurücksetzen: Haken entfernen. Übersprungenes holt "Neu einlesen" einer Gruppe nach.
 - **Verschleierte Namen:** zufällige Namen werden erkannt, versteckt und (`indexer:inspect`) über die PAR2-Datei aufgelöst.

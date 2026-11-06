@@ -4,6 +4,9 @@ namespace App\Services;
 /** Erkennt die Newznab-Kategorie aus Release-Name und Dateiendungen. Reine PHP-Klasse. */
 class Categorizer
 {
+    /** Bei geänderten Regeln erhöhen: indexer:recategorize --if-changed ordnet dann alle Releases einmal neu ein */
+    public const VERSION = 2;
+
     private const NOT = '(?<![a-z0-9])';
     private const END = '(?![a-z0-9])';
 
@@ -45,12 +48,18 @@ class Categorizer
             }
         }
 
+        // Doku (vor Film/Serie): immer TV/Doku
+        if (preg_match('/' . self::NOT . '(doku|dokus|dokumentation|dokumentarfilm|documentary|docu|reportage)' . self::END . '/i', $name)) {
+            return 5080;
+        }
+
         $uhd = (bool) preg_match('/2160p|' . self::NOT . '4k' . self::END . '|' . self::NOT . 'uhd' . self::END . '/i', $name);
         $hd = (bool) preg_match('/' . self::NOT . '(720|1080)[pi]' . self::END . '/i', $name);
 
-        // Anime
-        if (preg_match('/anime|\[(horriblesubs|subsplease|erai-raws|judas|ember|asw)\]/i', $name)) {
-            return 5070;
+        // Anime: Wort "anime", bekannte Gruppen oder P2P-Name ([Gruppe] + Dual-/Multi-Audio, Japanese, OmU) mit Video-Merkmal.
+        // Mit Jahr oder "Movie" und ohne Folge/Staffel = Anime-Film, sonst Anime-Serie.
+        if (self::isAnime($name)) {
+            return self::animeMovie($name) ? 2100 : 5070;
         }
 
         // TV
@@ -107,5 +116,29 @@ class Categorizer
         }
 
         return 7000;
+    }
+
+    public static function isAnime(string $name): bool
+    {
+        if (preg_match('/anime|\[(horriblesubs|subsplease|erai-raws|judas|ember|asw)\]/i', $name)) {
+            return true;
+        }
+        $video = '/(480p|720p|1080p|2160p|' . self::NOT . 'bd' . self::END . '|blu-?ray|web-?dl|webrip|x26[45]|hevc|av1)/i';
+        if (!preg_match($video, $name)) {
+            return false;
+        }
+        $marks = 'dual\W{0,3}audio|multi\W{0,3}audio|japanese|' . self::NOT . '(omu|omeu)' . self::END;
+        return (preg_match('/^\[[^\]]+\]/', $name) && preg_match('/' . $marks . '/i', $name))
+            || preg_match('/dual\W{0,3}audio.*(japanese|multi\W{0,3}sub)/i', $name);
+    }
+
+    private static function animeMovie(string $name): bool
+    {
+        $episode = '/' . self::NOT . 's\d{1,2}([ ._-]?e\d{1,3})?' . self::END . '|' . self::NOT . 'season|' . self::NOT . 'e\d{2,3}' . self::END
+            . '| - \d{1,4}( |$|v\d)|' . self::NOT . '\d{1,3}[ ._-]?(-|~)[ ._-]?\d{1,3}' . self::END . '|batch|complete series/i';
+        if (preg_match($episode, $name)) {
+            return false;
+        }
+        return (bool) preg_match('/' . self::NOT . '(19|20)\d{2}' . self::END . '|movie|film|gekijouban/i', $name);
     }
 }

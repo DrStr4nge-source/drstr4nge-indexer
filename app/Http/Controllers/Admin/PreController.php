@@ -40,6 +40,7 @@ class PreController extends Controller
             'rssAt' => $rss ? \Illuminate\Support\Carbon::createFromTimestamp($rss) : null,
             'rssEnabled' => (bool) config('indexer.pre_rss'),
             'apiEnabled' => (bool) config('indexer.predb_api.enabled'),
+            'apiPausedUntil' => ($p = \App\Services\Pre\PredbNet::pausedUntil()) ? \Illuminate\Support\Carbon::createFromTimestamp($p) : null,
             'irc' => $irc = IrcSettings::get(),
             'configured' => !empty($irc['nick']) && $irc['enabled'],
             'ircError' => Cache::get('pre_irc.error'),

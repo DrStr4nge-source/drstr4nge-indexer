@@ -2,6 +2,26 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.18.0] – 2026-11-02
+
+### Neu
+- Neue Kategorien **Movies/Anime** (2100) und **TV/Doku** (5080, Newznab-Standard "TV/Documentary"). Sie erscheinen in der Suche, in der API (`t=caps`) für Sonarr/Radarr und im Forum.
+- Anime wird besser erkannt: neben dem Wort "anime" und bekannten Gruppen auch P2P-Namen wie `[Gruppe] … (BD 1080p) [Dual-Audio]` oder mit Multi-Audio, Japanese, OmU. Mit Jahr oder "Movie" und ohne Folge/Staffel = Movies/Anime, sonst TV/Anime.
+- Dokus (Doku, Dokumentation, Documentary, Docu, Reportage) landen in TV/Doku.
+- Suche: Unterkategorien sind jetzt auswählbar (z.B. Movies/Anime, TV/Doku), gruppiert unter ihrer Hauptkategorie.
+- Nach dem Update ordnet `indexer:recategorize` alle vorhandenen Releases einmal automatisch neu ein (innerhalb von 10 Minuten, bei vielen Releases dauert es).
+
+### Geändert
+- predb.net: Antwortet die API mit HTTP 403 (gesperrt) oder 429 (zu viele Anfragen), pausiert der Indexer die Abfragen 24 Stunden (`PREDB_API_BLOCK_PAUSE_HOURS`) statt alle 5 Minuten erneut zu fragen. Eine Warnung im Log statt Dauerwarnungen; im Admin unter PreDB steht "pausiert bis ...".
+- predb.net wird sparsamer gefragt: Standard 2 Seiten und 5 Einzel-Abfragen pro Lauf, 3 Sekunden Pause (`PREDB_API_PAGES`, `PREDB_API_LOOKUP`, `PREDB_API_PAUSE_MS`).
+
+### Hinweis für Sonarr/Radarr
+- Sonarr: 5080 (TV/Doku) bei Bedarf in den Indexer-Kategorien anhaken; Anime nutzt weiter 5070.
+- Radarr: Movies/Anime (2100) ist kein Newznab-Standard. Wer "Movies" (2000) sucht, findet sie mit; einzeln anhakbar in den Indexer-Kategorien.
+
+### BETA (noch im Test)
+- Admin > Einstellungen: "Verschleierte Releases nicht speichern" (seit 1.17.0). Zurücksetzen: Haken entfernen und speichern.
+
 ## [1.17.1] – 2026-11-02
 
 ### Geändert
