@@ -18,7 +18,14 @@ Schedule::command('indexer:pre-deobfuscate')->everyThirtyMinutes()->withoutOverl
 Schedule::command('indexer:recategorize --if-changed')->everyTenMinutes()->withoutOverlapping(120)
     ->after(fn () => Cache::forever('schedule.last.recategorize', time()));
 Schedule::command('indexer:cleanup')->dailyAt('04:00')->timezone(config('indexer.timezone'))
+    ->withoutOverlapping(2880) // nie zwei Aufräum-Läufe gleichzeitig (Sperre höchstens 2 Tage)
     ->after(fn () => Cache::forever('schedule.last.cleanup', time()));
+if (config('indexer.optimize.enabled')) {
+    // Nach dem Aufräumen: freien Platz zurückgeben, höchstens alle INDEXER_OPTIMIZE_DAYS Tage und nur wenn es sich lohnt
+    Schedule::command('indexer:optimize --if-due')->dailyAt('05:00')->timezone(config('indexer.timezone'))
+        ->withoutOverlapping(1440)->runInBackground()
+        ->after(fn () => Cache::forever('schedule.last.optimize', time()));
+}
 Schedule::command('indexer:backup')->dailyAt(config('indexer.backup.time', '03:30'))->timezone(config('indexer.timezone'))->withoutOverlapping(180)
     ->after(fn () => Cache::forever('schedule.last.backup', time()));
 Schedule::command('indexer:health')->everyFifteenMinutes()->withoutOverlapping(30)

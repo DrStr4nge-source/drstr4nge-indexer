@@ -29,6 +29,9 @@ class Recategorize extends Command
                         || ($rel->obfuscated && !\App\Services\SubjectParser::meaningful($rel->name));
                 }
                 $builder->classify($rel);
+                if ($rel->status === 'spam' && !$rel->locked && !config('indexer.store_spam') && $rel->files !== []) {
+                    $rel->files = []; // Spam braucht keine Artikel-Liste (INDEXER_STORE_SPAM=false)
+                }
                 $rel->save();
                 $n++;
             }

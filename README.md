@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version 1.18.0" src="https://img.shields.io/badge/version-1.18.0-f59e0b">
+  <img alt="Version 1.19.0" src="https://img.shields.io/badge/version-1.19.0-f59e0b">
   <img alt="PHP 8.5" src="https://img.shields.io/badge/PHP-8.5-777bb4">
   <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12%20%7C%2013-ff2d20">
   <img alt="Ubuntu 24.04" src="https://img.shields.io/badge/Ubuntu-24.04%20LTS-e95420">
@@ -96,6 +96,9 @@ cd drstr4nge-indexer
 sudo bash install.sh
 ```
 
+Installiert wird immer die neueste veröffentlichte Version (neuester Tag unter Releases) mit allen Änderungen,
+eine bestimmte mit `sudo INSTALL_VERSION=v1.19.0 bash install.sh`.
+
 Das Skript fragt nach Domain oder IP, Admin-E-Mail, Manticore und SSL und richtet dann alles ein. Am Ende steht das
 Passwort des ersten Admins auf dem Bildschirm.
 
@@ -118,6 +121,15 @@ cd /tmp && rm -rf dsi && git clone -q https://github.com/DrStr4nge-source/drstr4
 
 Daten, `.env`, Logo, Cover und Einstellungen bleiben erhalten. Das Skript ergänzt neue `.env`-Einträge, aktualisiert Datenbank und
 Zeitplan und startet die Dienste neu.
+
+Installiert wird immer die **neueste veröffentlichte Version** (der neueste Tag unter Releases), nicht der Zwischenstand von `main`.
+Eine bestimmte Version, auch zum Zurückgehen:
+
+```bash
+cd /tmp && rm -rf dsi && git clone -q https://github.com/DrStr4nge-source/drstr4nge-indexer.git dsi && sudo UPDATE_VERSION=v1.18.0 bash dsi/update.sh
+```
+
+Den Stand von `main` (ungetestet) gibt es mit `UPDATE_VERSION=main`.
 
 Die ausführliche Anleitung mit manueller Installation, allen Einstellungen und Fehlersuche steht in
 **[docs/ANLEITUNG.md](docs/ANLEITUNG.md)**.

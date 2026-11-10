@@ -65,7 +65,7 @@ class Status extends Command
 
         $this->newLine();
         $this->line('<options=bold>Zeitplan (letzte Läufe)</>');
-        foreach (['crawl' => 'Crawler', 'inspect' => 'Prüfen (PAR2/RAR)', 'metadata' => 'Metadaten', 'pre-fetch' => 'Pre holen', 'cleanup' => 'Aufräumen', 'health' => 'Überwachung'] as $k => $label) {
+        foreach (['crawl' => 'Crawler', 'inspect' => 'Prüfen (PAR2/RAR)', 'metadata' => 'Metadaten', 'pre-fetch' => 'Pre holen', 'cleanup' => 'Aufräumen', 'optimize' => 'Tabelle verkleinern', 'health' => 'Überwachung'] as $k => $label) {
             $this->line(sprintf('  %-20s %s', $label, $ago(Cache::get("schedule.last.$k"))));
         }
         if (!Cache::get('schedule.last.health') && !Cache::get('schedule.last.crawl')) {

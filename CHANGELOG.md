@@ -2,6 +2,28 @@
 
 Alle wichtigen Änderungen am DrStr4nge Indexer. Die Versionen bis 1.8 wurden rückblickend aus der Entwicklung zusammengefasst.
 
+## [1.19.0] – 2026-11-06
+
+### Weniger Speicherplatz
+- Blacklist-Treffer werden gar nicht mehr gespeichert (`INDEXER_STORE_SPAM=false`, Standard). Releases, die erst beim Fertigwerden als Spam erkannt werden (zu klein, Spam-Wörter), werden ohne Artikel-Liste gespeichert. Die Artikel-Listen von Spam waren bisher der größte Teil der Datenbank.
+- Spam wird nach 1 Tag gelöscht statt nach 7 (`INDEXER_DELETE_SPAM_DAYS`).
+- Unvollständige Releases werden nach 1 Tag ohne neue Teile gelöscht statt nach 2 (`INDEXER_DELETE_INCOMPLETE_DAYS`); von dir gesperrte Releases bleiben.
+- `update.sh` beendet laufende Indexer-Aufgaben (Crawler, Aufräumen, Prüfen usw.) und setzt die Sperren des Zeitplans zurück. Der Zeitplan startet sie innerhalb weniger Minuten mit dem neuen Code neu; das `pkill` von Hand nach einem Update entfällt. Sicherung und Tabellen-Neuaufbau laufen weiter.
+- Neuer Befehl `indexer:optimize`: gibt den nach dem Aufräumen frei gewordenen Platz der Tabelle `releases` an die Festplatte zurück. Läuft automatisch nachts um 05:00, höchstens alle 3 Tage (`INDEXER_OPTIMIZE_DAYS`) und nur, wenn mindestens 1 GB und 10 % frei sind. Prüft vorher den freien Plattenplatz und wartet höchstens 60 Sekunden auf die Tabelle, damit der Indexer nie hinter ihm hängt. Abschalten: `INDEXER_OPTIMIZE_AUTO=false`. Von Hand: `php artisan indexer:optimize` (`--force` ohne Mindestmenge). Erkennt Fehler, die MariaDB als Ergebniszeile meldet, und misst die Größe mit aktuellen Werten.
+- Neu-Einordnen nach einer Blacklist-Änderung leert die Artikel-Liste von Releases, die dabei zu Spam werden.
+- Aufräumen (`indexer:cleanup`) geht jetzt einmal der ID nach durch die Tabelle statt jede Runde von vorne zu suchen: bei Millionen Releases Minuten statt Tage. Zeigt beim Start von Hand den Fortschritt.
+- Der nächtliche Aufräum-Lauf startet nicht mehr, solange der vorige noch läuft.
+- Hinweis: Ein im Admin freigegebener Spam-Eintrag hat keine Artikel-Liste mehr und ergibt keine NZB. Wer Spam vollständig behalten will: `INDEXER_STORE_SPAM=true`.
+
+### Updates über veröffentlichte Versionen
+- `update.sh` installiert jetzt die neueste veröffentlichte Version (neuester Tag), nicht mehr den Zwischenstand von `main`. Der Update-Befehl bleibt gleich.
+- Bestimmte Version oder zurück: `sudo UPDATE_VERSION=v1.18.0 bash dsi/update.sh`. Den Stand von `main` gibt es mit `UPDATE_VERSION=main`.
+- `install.sh` installiert ebenfalls die neueste veröffentlichte Version (`INSTALL_VERSION=v…` für eine bestimmte, `INSTALL_VERSION=main` für den Stand von `main`).
+- Die Version steht nur noch in der Datei `VERSION`; `config/indexer.php` liest sie von dort.
+
+### BETA (noch im Test)
+- Admin > Einstellungen: "Verschleierte Releases nicht speichern" (seit 1.17.0). Zurücksetzen: Haken entfernen und speichern. Übersprungenes lässt sich über "Neu einlesen" einer Gruppe nachholen.
+
 ## [1.18.0] – 2026-11-02
 
 ### Neu

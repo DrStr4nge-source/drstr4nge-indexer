@@ -653,7 +653,21 @@ main() {
     summary
 }
 
-# Nur ausführen, wenn direkt gestartet (nicht beim Einbinden für Tests)
+# Nur ausführen, wenn direkt gestartet (nicht beim Einbinden für Tests oder durch update.sh)
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    # Aus einem Git-Klon: immer die neueste veröffentlichte Version (Tag) installieren, nicht den Zwischenstand von main.
+    # Bestimmte Version: INSTALL_VERSION=v1.19.0, Stand von main: INSTALL_VERSION=main. Aus einer ZIP-Datei: so wie sie ist.
+    _dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    if [[ -z "${DSI_TAG_DONE:-}" && -d "$_dir/.git" && "${INSTALL_VERSION:-}" != "main" ]]; then
+        git -C "$_dir" fetch -q --tags origin 2>/dev/null || true
+        _tag="${INSTALL_VERSION:-$(git -C "$_dir" tag -l 'v*' --sort=-v:refname | head -n1)}"
+        if [[ -n "$_tag" ]]; then
+            [[ "$_tag" == v* ]] || _tag="v$_tag"
+            git -C "$_dir" rev-parse -q --verify "refs/tags/$_tag" >/dev/null || { echo "Version $_tag gibt es nicht." >&2; exit 1; }
+            git -C "$_dir" -c advice.detachedHead=false checkout -q "$_tag"
+            echo "Installiere DrStr4nge Indexer $_tag"
+            DSI_TAG_DONE=1 exec bash "$_dir/install.sh" "$@"
+        fi
+    fi
     main "$@"
 fi

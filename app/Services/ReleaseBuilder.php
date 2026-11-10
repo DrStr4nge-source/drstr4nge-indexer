@@ -63,10 +63,16 @@ class ReleaseBuilder
 
         // BETA (Admin > Einstellungen): neue verschleierte Releases gar nicht erst speichern
         $skipObf = \App\Models\Setting::get('skip_obfuscated') === '1';
-        $skipped = 0;
+        $skipped = $skippedSpam = 0;
+        $storeSpam = (bool) config('indexer.store_spam');
         foreach ($acc as $guid => $d) {
             if ($skipObf && ($d['anon'] || Obfuscation::looks($d['name'])) && !Release::where('guid', $guid)->exists()) {
                 $skipped++;
+                continue;
+            }
+            // Blacklist-Treffer gar nicht erst speichern (INDEXER_STORE_SPAM=false)
+            if (!$storeSpam && Blacklist::matches($d['poster'], $d['anon'] ? null : $d['name']) && !Release::where('guid', $guid)->exists()) {
+                $skippedSpam++;
                 continue;
             }
             $rel = Release::firstOrNew(['guid' => $guid]);
@@ -109,6 +115,9 @@ class ReleaseBuilder
                 $rel->obfuscated = $d['anon'] || Obfuscation::looks($rel->name);
             }
             $this->classify($rel);
+            if ($rel->status === 'spam' && !$storeSpam && !$rel->locked) {
+                $rel->files = []; // Spam braucht keine Artikel-Liste (der größte Teil des Speicherplatzes)
+            }
             try {
                 $rel->save();
             } catch (\Illuminate\Database\QueryException $e) {
@@ -120,7 +129,11 @@ class ReleaseBuilder
             \Illuminate\Support\Facades\Cache::add('skip_obfuscated.count', 0);
             \Illuminate\Support\Facades\Cache::increment('skip_obfuscated.count', $skipped);
         }
-        return count($acc) - $skipped;
+        if ($skippedSpam) {
+            \Illuminate\Support\Facades\Cache::add('skip_spam.count', 0);
+            \Illuminate\Support\Facades\Cache::increment('skip_spam.count', $skippedSpam);
+        }
+        return count($acc) - $skipped - $skippedSpam;
     }
 
     public function classify(Release $rel): void

@@ -1,6 +1,6 @@
 <?php
 return [
-    'version' => '1.18.0',
+    'version' => trim((string) @file_get_contents(base_path('VERSION'))) ?: '?', // einzige Quelle: Datei VERSION
     // Zeitzone für Anzeige und Zeitplan (gespeichert wird in UTC)
     'timezone' => env('INDEXER_TIMEZONE', 'Europe/Berlin'),
 
@@ -75,6 +75,15 @@ return [
     'retention_days'     => (int) env('INDEXER_RETENTION_DAYS', 1000), // ältere Releases werden gelöscht
     'delete_obfuscated_days' => (int) env('INDEXER_DELETE_OBFUSCATED_DAYS', 3), // verschleierte ohne Namen nach X Tagen löschen, 0 = nie
     'delete_passworded_days' => (int) env('INDEXER_DELETE_PASSWORDED_DAYS', 1), // passwortgeschützte nach X Tagen löschen, 0 = nie
+    'delete_incomplete_days' => (int) env('INDEXER_DELETE_INCOMPLETE_DAYS', 1), // unvollständige nach X Tagen ohne neue Teile löschen
+    'delete_spam_days'   => (int) env('INDEXER_DELETE_SPAM_DAYS', 1),    // Spam (Blacklist, zu klein, Spam-Wörter) nach X Tagen löschen
+    'optimize' => [ // Tabelle releases regelmäßig verkleinern (indexer:optimize)
+        'enabled' => (bool) env('INDEXER_OPTIMIZE_AUTO', true),
+        'days' => (int) env('INDEXER_OPTIMIZE_DAYS', 3),          // höchstens alle X Tage
+        'min_free_mb' => (int) env('INDEXER_OPTIMIZE_MIN_FREE_MB', 1024), // erst ab so viel freiem Platz in der Tabelle
+        'lock_wait' => (int) env('INDEXER_OPTIMIZE_LOCK_WAIT', 60),  // Sekunden auf die Tabelle warten, dann nächstes Mal
+    ],
+    'store_spam'         => (bool) env('INDEXER_STORE_SPAM', false),     // false: Blacklist-Treffer gar nicht speichern, Spam ohne Artikel-Liste
     'min_size'           => (int) env('INDEXER_MIN_SIZE', 1048576),    // kleinere Releases gelten als Spam
     'inspect_per_run'    => (int) env('INDEXER_INSPECT_PER_RUN', 100), // Par2/RAR-Prüfungen pro Lauf
     'inspect_delay_minutes' => (int) env('INDEXER_INSPECT_DELAY_MINUTES', 30), // erst prüfen, wenn so lange keine neuen Teile kamen (Provider braucht Zeit zum Verteilen)

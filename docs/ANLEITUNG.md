@@ -134,6 +134,11 @@ Dann:
    Eine fertige Vorlage steht in `install.sh` (Funktion `write_nginx_site`).
 8. Optional SSL: `apt install -y certbot python3-certbot-nginx && certbot --nginx -d deine-domain.de`
 
+## Datenbank verkleinern
+Gelöschte Releases geben ihren Platz erst nach einem Neuaufbau der Tabelle an die Festplatte zurück. Das macht `indexer:optimize`
+automatisch (nachts 05:00, höchstens alle `INDEXER_OPTIMIZE_DAYS` Tage, nur ab 1 GB frei). Von Hand:
+`sudo -u www-data php artisan indexer:optimize --force`. Crawler und Webseite laufen währenddessen weiter.
+
 ## Update
 Mit einem Befehl, direkt von GitHub (Daten, `.env`, Logo, Cover und Einstellungen aus dem Admin bleiben erhalten):
 
@@ -142,6 +147,9 @@ Mit einem Befehl, direkt von GitHub (Daten, `.env`, Logo, Cover und Einstellunge
 `update.sh` kopiert die neuen Dateien nach `/var/www/indexer`, ergänzt neue Einträge in der `.env` (vorhandene Werte bleiben),
 aktualisiert Zeitplan und Datenbank, richtet den Pre-Dienst ein bzw. startet ihn neu und installiert rsync/rclone, falls sie fehlen.
 Anderer Ordner: `sudo APP_DIR=/pfad bash dsi/update.sh`.
+
+Es wird immer die neueste veröffentlichte Version installiert (neuester Tag unter Releases). Eine bestimmte Version oder zurück
+auf eine ältere: `sudo UPDATE_VERSION=v1.18.0 bash dsi/update.sh`. Ungetesteter Stand von `main`: `UPDATE_VERSION=main`.
 
 Achtung: `config/indexer.php` wird überschrieben. Eigene Änderungen dort (z.B. VIP-Preise) danach erneut eintragen.
 `install.sh` ist nur für die Erstinstallation und bricht ab, wenn `/var/www/indexer` schon existiert.
